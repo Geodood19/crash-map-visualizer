@@ -1,56 +1,38 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Crash Data Visualizer</title>
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
 
-    <!-- Add lesson styles to following stylesheet -->
-    <link rel="stylesheet" href="styles/styles.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-      integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
-      crossorigin=""
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,100..900;1,100..900&display=swap"
-      rel="stylesheet"
-    />
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <title>Crash Data Visualizer</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-  <body>
-    <h1>Fayette County Crash Data &ndash; 2023</h1>
-    <h2 id="button">Info</h2>
-    <div id="map"></div>
-    <div id="ui-controls">
-      <label>
-        <span class="min">2001</span>
-        <span class="max">2021</span>
-        <input
-          type="range"
-          min="2001"
-          max="2021"
-          value="2001"
-          step="1"
-          class="year-slider"
-        />
-      </label>
-    </div>
-    <div id="modal">
-      <div class="container">
-        <span>
-          &times;
-          <!-- <svg
+  <!-- Add lesson styles to following stylesheet -->
+  <link rel="stylesheet" href="styles/styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet" />
+</head>
+
+<body>
+  <h1>Fayette County Crash Data &ndash; 2023</h1>
+  <h2 id="button">Info</h2>
+  <div id="map"></div>
+  <div id="ui-controls">
+    <label>
+      <span class="min">2001</span>
+      <span class="max">2021</span>
+      <input type="range" min="2001" max="2021" value="2001" step="1" class="year-slider" />
+    </label>
+  </div>
+  <div id="modal">
+    <div class="container">
+      <span>
+        &times;
+        <!-- <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
                 height="20"
@@ -65,50 +47,46 @@
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg> -->
-        </span>
-        <div class="title">Data Source and Methods</div>
-        <p>Data downloaded for Fayette County, KY for 2023.</p>
+      </span>
+      <div class="title">Data Source and Methods</div>
+      <p>Data downloaded for Fayette County, KY for 2023.</p>
 
-        <p>
-          Crash Data acquired from KYTC's Public Records:
-          <a href="http://crashinformationky.org/AdvancedSearch">LINK</a>
-        </p>
+      <p>
+        Crash Data acquired from KYTC's Public Records:
+        <a href="http://crashinformationky.org/AdvancedSearch">LINK</a>
+      </p>
 
-        <div class="footer">
-          James FL Thompson | New Maps Plus | October, 2024
-        </div>
+      <div class="footer">
+        James FL Thompson | New Maps Plus | October, 2024
       </div>
     </div>
+  </div>
 
-    <!-- Add D3 JS Library -->
-    <script src="https://d3js.org/d3.v7.js"></script>
+  <!-- Add D3 JS Library -->
+  <script src="https://d3js.org/d3.v7.js"></script>
 
-    <!-- Leaflet JS -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-      integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
-      crossorigin=""
-    ></script>
-    <!-- add poppy parse library -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.1/papaparse.min.js"
-      integrity="sha512-EbdJQSugx0nVWrtyK3JdQQ/03mS3Q1UiAhRtErbwl1YL/+e2hZdlIcSURxxh7WXHTzn83sjlh2rysACoJGfb6g=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
 
-    <!-- Chroma.js library -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.2/chroma.min.js"
-      integrity="sha512-8TVPS0EFkkmtT6yPb5K4csnSt3tjbKRrs0F8gvTNKv2OxOcwDO7+Klkz86gMVrzfqtZos5N2a+k+r9D+hlccmQ=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
+  <!-- Include Leaflet-heat.js JavaScript -->
+  <script src="js/leaflet-heat.js"></script>
 
-    <!-- Omnivore JS Library -->
-    <script src="https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js"></script>
+  <!-- add poppy parse library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.1/papaparse.min.js"
+    integrity="sha512-EbdJQSugx0nVWrtyK3JdQQ/03mS3Q1UiAhRtErbwl1YL/+e2hZdlIcSURxxh7WXHTzn83sjlh2rysACoJGfb6g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <!-- External JS which holds the meat and potatoes of our map -->
-    <script src="js/app.js"></script>
-  </body>
+  <!-- Chroma.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.2/chroma.min.js"
+    integrity="sha512-8TVPS0EFkkmtT6yPb5K4csnSt3tjbKRrs0F8gvTNKv2OxOcwDO7+Klkz86gMVrzfqtZos5N2a+k+r9D+hlccmQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- Omnivore JS Library -->
+  <script src="https://api.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js"></script>
+
+  <!-- External JS which holds the meat and potatoes of our map -->
+  <script src="js/app.js"></script>
+</body>
+
 </html>
