@@ -121,7 +121,7 @@
           "circle-radius": 5,
           // color circles by KABCO values
           // style expressions, check maplibre documentation: https://maplibre.org/maplibre-style-spec/expressions/
-          "circle-color": createFillColor(KABCO, kabcoVals),
+          "circle-color": createFillColor(kabcoVals),
           "circle-opacity": 0.75,
           "circle-stroke-width": 0.75,
           "circle-stroke-color": "#222",
@@ -206,15 +206,19 @@
 
     // allow crashStats fx to access the data by passing it before the end of the fx
     crashStats(data);
-
     // using the array of KABCO and kabcoVals, create a createFillColor function to determine color to paint the crashes
-    const createFillColor = (KABCO, kabcoVals) => {
+    function createFillColor(kabcoVals) {
       const colors = kabcoVals.reduce((agg, item) => {
+        console.log(agg);
         agg.push(item.id);
         agg.push(item.color);
         return agg;
       }, []);
-      return ["match", ["literal", ["get", KABCO]], ...colors, "#CCC"];
+      console.log(`["match", ["literal", ["get", 'KABCO']], ${colors}, "#CCC"]`);
+      // Style expressions are tricky. They use strings and arrays to create a style. 
+      // This is a match expression that uses KABCO value to determine the color of the circle.
+      // KABCO is not a variable in this case.
+      return ["match", ["get", 'KABCO'], ...colors, "#CCC"];
     };
 
     // also need to allow access to the geoJson that is being mapped
