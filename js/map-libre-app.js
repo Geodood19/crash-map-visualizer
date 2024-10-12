@@ -31,8 +31,8 @@
     // this is the style that you'll want to replace with your own
     style:
       "https://api.maptiler.com/maps/0196b0e2-ea56-44ac-bf94-c9fb230df9ad/style.json?key=VR7FKTd6lXA4PKRQVzfY", // style URL
-    center: [-84.5, 38], // starting position [lng, lat]
-    zoom: 10, // starting zoom
+    center: [-84.475, 38.02], // starting position [lng, lat]
+    zoom: 10.2, // starting zoom
   });
 
   // Load data from remote source using D3 and async/await
@@ -43,7 +43,7 @@
     createGeoJson(data, sidecar);
   }
 
-  fetchData();
+  fetchData(); // invokes the fetchData function
 
   function createGeoJson(data, sidecar) {
     const geojson = {
@@ -91,6 +91,20 @@
     // check the geojson
     console.log(geojson);
 
+    // need to add the ability to define KABCO colors
+    // access KABCO values in the data array
+    const KABCO = data.map((d) => d.KABCO);
+    console.log(KABCO); // This will log an array of KABCO values
+
+    // add breakdown for colorizing KABCO values
+    const kabcoVals = [
+      { id: "1.0", text: "Fatal Crash", color: "#FF0000" },
+      { id: "2.0", text: "Serious Injury Crash", color: "#ff7b00" },
+      { id: "3.0", text: "Minor Injury Crash", color: "#f5ee22" },
+      { id: "4.0", text: "Possible Injury Crash", color: "#05fa3a" },
+      { id: "5.0", text: "Property Damage Only", color: "#1953ff" },
+    ];
+
     // Add the data to the map after loading
     map.on("load", function () {
       // add source first
@@ -106,35 +120,23 @@
         paint: {
           "circle-radius": 5,
           // color circles by KABCO values
-          // style expressions, check maplibre documentation: https://maplibre.org/maplibre-style-spec/expressions/ 
-          "circle-color": [
-            "match",
-            ["get", "KABCO"],
-            "1.0",
-            "#FF0000",
-            "2.0",
-            "#ff7b00",
-            "3.0",
-            "#f5ee22",
-            "4.0",
-            "#05fa3a",
-            "5.0",
-            "#1953ff",
-            "black",
-          ],
+          // style expressions, check maplibre documentation: https://maplibre.org/maplibre-style-spec/expressions/
+          "circle-color": createFillColor(KABCO, kabcoVals),
           "circle-opacity": 0.75,
           "circle-stroke-width": 0.75,
-          "circle-stroke-color": "#222"
+          "circle-stroke-color": "#222",
         },
       });
+      // console.log(crashes);
 
       // add heat layer using mapLibre (Documentation: https://maplibre.org/maplibre-gl-js/docs/examples/heatmap-layer/)
       map.addLayer({
         // mapLibre to add layers
         id: "heatLayer", // what is this layer called?
-        type: "heatmap", // what type of layer is being added to the map from MapLibre? 
-        source: "crashes", // what is the source data for this layer? 
-        paint: { // paint{} controls the colors 
+        type: "heatmap", // what type of layer is being added to the map from MapLibre?
+        source: "crashes", // what is the source data for this layer?
+        paint: {
+          // paint{} controls the colors
           // color ramp for heatmap
           // begin color ramp at 0-stop with a 0-transparency color
           // to create blur-like effect
@@ -171,9 +173,9 @@
             "interpolate",
             ["linear"],
             ["zoom"],
-            9, // the most zoomed out zoom level will have... 
-            0.9, // ...a 90% opacity on the heat layer (10% transparency), which will smoothly transition to... 
-            14, // ...zoom level 14, which will have an opacity of.... 
+            9, // the most zoomed out zoom level will have...
+            0.95, // ...a 90% opacity on the heat layer (10% transparency), which will smoothly transition to...
+            15, // ...zoom level 14, which will have an opacity of....
             0, // 0%, or 100% transparent
           ],
         },
@@ -200,10 +202,23 @@
       map.on("mouseleave", "crashes", function () {
         map.getCanvas().style.cursor = "";
       });
-    });
+    }); // end map.on function to add crashes
 
+    // allow crashStats fx to access the data by passing it before the end of the fx
     crashStats(data);
-  }
+
+    // using the array of KABCO and kabcoVals, create a createFillColor function to determine color to paint the crashes
+    const createFillColor = (KABCO, kabcoVals) => {
+      const colors = kabcoVals.reduce((agg, item) => {
+        agg.push(item.id);
+        agg.push(item.color);
+        return agg;
+      }, []);
+      return ["match", ["literal", ["get", KABCO]], ...colors, "#CCC"];
+    };
+
+    // also need to allow access to the geoJson that is being mapped
+  } // end createGeoJson
 
   // Function to calculate crash statistics
   function crashStats(data) {
@@ -233,5 +248,13 @@
     });
 
     console.log(stats);
+    // drawLegend(data, stats);
   }
+
+  // function to draw the legend
+  // function drawLegend(_data, _stats) {
+  //   // example of legend control found here: https://www.maptiler.com/news/2022/04/custom-map-portal-a-start-to-end-guide/
+  //   // need to create a function to filter layer
+  //   // const createFilter =
+  // }
 })();
