@@ -98,13 +98,53 @@
 
     // add breakdown for colorizing KABCO values
     // id will be used to match the value in KABCO with the id property in the kabcoVals object
+    // Add prop for checked to determine if the KABCO value is visible
     const kabcoVals = [
-      { id: "1.0", text: "Fatal Crash", color: "#FF0000" },
-      { id: "2.0", text: "Serious Injury Crash", color: "#ff7b00" },
-      { id: "3.0", text: "Minor Injury Crash", color: "#f5ee22" },
-      { id: "4.0", text: "Possible Injury Crash", color: "#05fa3a" },
-      { id: "5.0", text: "Property Damage Only", color: "#1953ff" },
+      { id: "1.0", text: "Fatal Crash", color: "#FF0000", checked: true },
+      { id: "2.0", text: "Serious Injury Crash", color: "#ff7b00", checked: true },
+      { id: "3.0", text: "Minor Injury Crash", color: "#f5ee22", checked: true },
+      { id: "4.0", text: "Possible Injury Crash", color: "#05fa3a", checked: true },
+      { id: "5.0", text: "Property Damage Only", color: "#1953ff", checked: true },
     ];
+
+    // Build the legend from CSS and the kabcoVals array
+    const legend = document.getElementById("legend");
+    kabcoVals.forEach(function (item) {
+      const div = document.createElement("div");
+      // Style each with a checkbox, color, and text. Note the value is the KABCO value
+      div.innerHTML = `
+       <input type="checkbox" value="${item.id}" checked>
+                <span class="legend-boxes" style="background-color: ${item.color}"></span>
+                <label for="${item.id}">${item.text}</label>`;
+      legend.appendChild(div);
+    });
+    // Add event listener to the legend checkboxes. Returns an array of checkboxes
+    const legendBoxes = document.querySelectorAll("#legend input");
+    // Loop through the checkboxes and add an event listener to each
+    legendBoxes.forEach(function (input) {
+      // When the checkbox is changed, update the map
+      input.addEventListener("change", function (e) {
+        // Loop through the kabcoVals array and update the checked property
+        kabcoVals.forEach(function (item) {
+          if (e.target.value == item.id) {
+            item.checked = e.target.checked;
+          }
+        });
+        // Create an array to hold the KABCO values
+        let categories = [];
+        // Loop through the kabcoVals array and push the id to the categories array if checked
+        kabcoVals.forEach(function (item) {
+          if (item.checked) {
+            categories.push(item.id);
+          }
+        });
+        // Use the filter expression and setFilter method to filter the data
+        const filter = ['in', // Filter the data to only include the KABCO values in the array
+          ['get', 'KABCO'], // The attribute field to filter on
+          ['literal', categories]]
+        map.setFilter("crashes", filter);
+      });
+    });
 
     // Add the data to the map after loading
     map.on("load", function () {
@@ -118,6 +158,10 @@
         id: "crashes",
         type: "circle",
         source: "crashes",
+        filter: ['in', // Filter the data to only include the KABCO values in the array
+          ['get', 'KABCO'], // The attribute field to filter on
+          ['literal', ['1.0', '2.0', '3.0', '4.0', '5.0']] // The values to include
+        ],
         paint: {
           "circle-radius": 5,
           // color circles by KABCO values
@@ -248,69 +292,70 @@
       return removeAtIndex(arr, index);
     };
 
+    // This plugin puts the style layers on the map. It is not needed for this example.
     // Now add the legend control map element
     // map.addControl(gc, "top-left");
 
-    class legendControl {
-      constructor(categories, field) {
-        this.categories = categories;
-        this.field = field;
-      }
+    // class legendControl {
+    //   constructor(categories, field) {
+    //     this.categories = categories;
+    //     this.field = field;
+    //   }
 
-      onAdd(map) {
-        this._map = map;
-        this._container = document.createElement("div");
-        this._container.className = "maplibregl-ctrl";
-        const _fragment = document.createDocumentFragment();
-        const _nav = document.createElement("nav");
-        _nav.className = "maplibregl-ctrl legend";
-        _nav.id = "legend";
-        _fragment.appendChild(_nav);
-        this.categories.forEach((element) => {
-          const _input = document.createElement("input");
-          _input.type = "checkbox";
-          _input.id = element.id;
-          _input.className = "input-layers";
-          _input.checked = true;
-          const this_ = this;
-          _input.addEventListener("change", function (e) {
-            this_.updateLegend(e.target.id);
-          });
-          const _label = document.createElement("label");
-          _label.htmlFor = element.id;
-          const _text = document.createTextNode(element.text);
-          const _legend = document.createElement("i");
-          _legend.style.backgroundColor = element.color;
-          _label.appendChild(_text);
-          _label.appendChild(_legend);
-          _nav.appendChild(_input);
-          _nav.appendChild(_label);
-        });
-        this._container.appendChild(_fragment);
-        return this._container;
-      }
+    //   onAdd(map) {
+    //     this._map = map;
+    //     this._container = document.createElement("div");
+    //     this._container.className = "maplibregl-ctrl";
+    //     const _fragment = document.createDocumentFragment();
+    //     const _nav = document.createElement("nav");
+    //     _nav.className = "maplibregl-ctrl legend";
+    //     _nav.id = "legend";
+    //     _fragment.appendChild(_nav);
+    //     this.categories.forEach((element) => {
+    //       const _input = document.createElement("input");
+    //       _input.type = "checkbox";
+    //       _input.id = element.id;
+    //       _input.className = "input-layers";
+    //       _input.checked = true;
+    //       const this_ = this;
+    //       _input.addEventListener("change", function (e) {
+    //         this_.updateLegend(e.target.id);
+    //       });
+    //       const _label = document.createElement("label");
+    //       _label.htmlFor = element.id;
+    //       const _text = document.createTextNode(element.text);
+    //       const _legend = document.createElement("i");
+    //       _legend.style.backgroundColor = element.color;
+    //       _label.appendChild(_text);
+    //       _label.appendChild(_legend);
+    //       _nav.appendChild(_input);
+    //       _nav.appendChild(_label);
+    //     });
+    //     this._container.appendChild(_fragment);
+    //     return this._container;
+    //   }
 
-      onRemove() {
-        this._container.parentNode.removeChild(this._container);
-        this._map = undefined;
-      }
+    //   onRemove() {
+    //     this._container.parentNode.removeChild(this._container);
+    //     this._map = undefined;
+    //   }
 
-      updateLegend(id) {
-        let filter = this._map.getFilter("crashes");
-        if (filter) {
-          const [any, ...filters] = filter[2];
-          filter[2] = [
-            any,
-            ...toggle(filters, ["in", this.field, id], (item) => item[2]),
-          ];
-          this._map.setFilter("crashes", filter);
-        }
-      }
-    }
-    map.addControl(
-      new legendControl(kabcoVals),
-      "top-right"
-    );
+    //   updateLegend(id) {
+    //     let filter = this._map.getFilter("crashes");
+    //     if (filter) {
+    //       const [any, ...filters] = filter[2];
+    //       filter[2] = [
+    //         any,
+    //         ...toggle(filters, ["in", this.field, id], (item) => item[2]),
+    //       ];
+    //       this._map.setFilter("crashes", filter);
+    //     }
+    //   }
+    // }
+    // map.addControl(
+    //   new legendControl(kabcoVals),
+    //   "top-right"
+    // );
   } // end createGeoJson
 
   // Function to calculate crash statistics
