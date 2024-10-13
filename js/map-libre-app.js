@@ -35,6 +35,9 @@
     zoom: 10.2, // starting zoom
   });
 
+  // Add zoom and rotation controls to the map.
+  map.addControl(new maplibregl.NavigationControl());
+
   // Load data from remote source using D3 and async/await
   async function fetchData() {
     const data = await d3.csv("/data/Fayette_2023Crashes_KABCO.csv");
@@ -45,6 +48,14 @@
 
   fetchData(); // invokes the fetchData function
   // console.log(data);
+
+  // function to convert text to title case, source: https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
+  function toTitleCase(str) {
+    return str.replace(
+      /\w\S*/g,
+      (text) => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+    );
+  }
 
   function createGeoJson(data, sidecar) {
     const geojson = {
@@ -58,6 +69,7 @@
             STATS: `Injuries: ${d.NumberInjured} | Fatalities: ${d.NumberKilled}`,
             ID: d.IncidentID,
             Time: d.CollisionTime,
+            MannerofCollision: d.MannerofCollision,
             xtra: "",
           },
           geometry: {
@@ -250,8 +262,11 @@
       map.on("click", "crashes", function (e) {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const d = e.features[0].properties;
-        const popup = document.getElementById("info");
-        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${d.STATS}<br>ID: ${d.ID}<br>Collision Time: ${d.Time}`;
+        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${
+          d.STATS
+        }<br>ID: ${d.ID}<br>Collision Time: ${
+          d.Time
+        }<br>Manner of Collision: ${toTitleCase(d.MannerofCollision)}`;
         if (d.xtra) {
           description += `<br><strong>Factors:</strong><ul>${d.xtra}</ul>`;
         }
@@ -304,7 +319,10 @@
       } else {
         stats.KABCO[d.KABCO] = 1;
       }
-      if (d.MannerofCollision in stats.MannerofCollision) {
+      if (
+        d.MannerofCollision in stats.MannerofCollision &&
+        d.MannerofCollision !== ""
+      ) {
         stats.MannerofCollision[d.MannerofCollision]++;
       } else {
         stats.MannerofCollision[d.MannerofCollision] = 1;
@@ -318,5 +336,14 @@
     });
 
     console.log(stats);
+
+    // define the data into HTML which we will place inside a defined div element
+    const crashData = `
+        <strong>Number Killed</strong>: ${stats.NumberKilled}<br>
+        <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br>
+    `;
+    // what is inside the stats div is now going to be equal to what we defined in crashData
+    // stats is defined in the CSS
+    document.getElementById("stats").innerHTML = crashData;
   }
 })();

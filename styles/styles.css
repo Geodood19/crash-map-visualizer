@@ -121,7 +121,7 @@
     font-family: "Libre Franklin", sans-serif;
     position: absolute;
     z-index: 650;
-    top: 10px;
+    bottom: 50px;
     right: 10px;
     padding: 6px 8px;
     font-size: 1em;
