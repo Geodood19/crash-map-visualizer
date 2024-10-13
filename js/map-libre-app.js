@@ -38,7 +38,7 @@
   // Load data from remote source using D3 and async/await
   async function fetchData() {
     const data = await d3.csv("../data/Fayette_2023Crashes_KABCO.csv");
-    const sidecar = await d3.csv("../data/sidecar.csv");
+    const sidecar = await d3.csv("../data/factors.csv");
     console.log(data, sidecar);
     createGeoJson(data, sidecar);
   }
@@ -56,6 +56,7 @@
             KABCO: d.KABCO,
             STATS: `Injuries: ${d.NumberInjured} | Fatalities: ${d.NumberKilled}`,
             ID: d.IncidentID,
+            Time: d.CollisionTime,
             xtra: "",
           },
           geometry: {
@@ -67,15 +68,15 @@
         let factors = {};
         // loop through the sidecar data
         sidecar.forEach(function (s) {
-          if (s.id == d.IncidentID) {
+          if (s.IncidentId == d.IncidentID) {
             // decide which fields to use, sum, or count
-            if (s.text1) {
-              factors[s.text1] == 1
-                ? factors[s.text1]++
-                : (factors[s.text1] = 1);
+            if (s.Factor_Type) {
+              factors[s.Factor_Type] == 1
+                ? factors[s.Factor_Type]++
+                : (factors[s.Factor_Type] = 1);
             }
-            if (s.text2) {
-              factors[s.text2] = true;
+            if (s.Factor_Text) {
+              factors[s.Factor_Text] = true;
             }
           }
         });
@@ -100,11 +101,11 @@
     // id will be used to match the value in KABCO with the id property in the kabcoVals object
     // Add prop for checked to determine if the KABCO value is visible
     const kabcoVals = [
-      { id: "1.0", text: "Fatal Crash", color: "#FF0000", checked: true },
-      { id: "2.0", text: "Serious Injury Crash", color: "#ff7b00", checked: true },
-      { id: "3.0", text: "Minor Injury Crash", color: "#f5ee22", checked: true },
-      { id: "4.0", text: "Possible Injury Crash", color: "#05fa3a", checked: true },
-      { id: "5.0", text: "Property Damage Only", color: "#1953ff", checked: true },
+      { id: "1", text: "Fatal Crash", color: "#FF0000", checked: true },
+      { id: "2", text: "Serious Injury Crash", color: "#ff7b00", checked: true },
+      { id: "3", text: "Minor Injury Crash", color: "#f5ee22", checked: true },
+      { id: "4", text: "Possible Injury Crash", color: "#05fa3a", checked: true },
+      { id: "5", text: "Property Damage Only", color: "#1953ff", checked: true },
     ];
 
     // Build the legend from CSS and the kabcoVals array
@@ -160,7 +161,7 @@
         source: "crashes",
         filter: ['in', // Filter the data to only include the KABCO values in the array
           ['get', 'KABCO'], // The attribute field to filter on
-          ['literal', ['1.0', '2.0', '3.0', '4.0', '5.0']] // The values to include
+          ['literal', ['1', '2', '3', '4', '5']] // The values to include
         ],
         paint: {
           "circle-radius": 5,
@@ -171,7 +172,7 @@
           "circle-stroke-width": 0.75,
           "circle-stroke-color": "#222",
         },
-        // filter: createFilter(kabcoVals),
+        
       });
       // console.log(crashes);
 
@@ -220,8 +221,8 @@
             ["linear"],
             ["zoom"],
             9, // the most zoomed out zoom level will have...
-            0.95, // ...a 90% opacity on the heat layer (10% transparency), which will smoothly transition to...
-            15, // ...zoom level 14, which will have an opacity of....
+            0.95, // ...a 95% opacity on the heat layer (5% transparency), which will smoothly transition to...
+            15, // ...zoom level 15, which will have an opacity of....
             0, // 0%, or 100% transparent
           ],
         },
@@ -231,7 +232,7 @@
       map.on("click", "crashes", function (e) {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const d = e.features[0].properties;
-        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${d.STATS}<br>ID: ${d.ID}`;
+        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${d.STATS}<br>ID: ${d.ID}<br>Collision Time: ${d.Time}`;
         if (d.xtra) {
           description += `<br><strong>Factors:</strong><ul>${d.xtra}</ul>`;
         }
@@ -292,70 +293,6 @@
       return removeAtIndex(arr, index);
     };
 
-    // This plugin puts the style layers on the map. It is not needed for this example.
-    // Now add the legend control map element
-    // map.addControl(gc, "top-left");
-
-    // class legendControl {
-    //   constructor(categories, field) {
-    //     this.categories = categories;
-    //     this.field = field;
-    //   }
-
-    //   onAdd(map) {
-    //     this._map = map;
-    //     this._container = document.createElement("div");
-    //     this._container.className = "maplibregl-ctrl";
-    //     const _fragment = document.createDocumentFragment();
-    //     const _nav = document.createElement("nav");
-    //     _nav.className = "maplibregl-ctrl legend";
-    //     _nav.id = "legend";
-    //     _fragment.appendChild(_nav);
-    //     this.categories.forEach((element) => {
-    //       const _input = document.createElement("input");
-    //       _input.type = "checkbox";
-    //       _input.id = element.id;
-    //       _input.className = "input-layers";
-    //       _input.checked = true;
-    //       const this_ = this;
-    //       _input.addEventListener("change", function (e) {
-    //         this_.updateLegend(e.target.id);
-    //       });
-    //       const _label = document.createElement("label");
-    //       _label.htmlFor = element.id;
-    //       const _text = document.createTextNode(element.text);
-    //       const _legend = document.createElement("i");
-    //       _legend.style.backgroundColor = element.color;
-    //       _label.appendChild(_text);
-    //       _label.appendChild(_legend);
-    //       _nav.appendChild(_input);
-    //       _nav.appendChild(_label);
-    //     });
-    //     this._container.appendChild(_fragment);
-    //     return this._container;
-    //   }
-
-    //   onRemove() {
-    //     this._container.parentNode.removeChild(this._container);
-    //     this._map = undefined;
-    //   }
-
-    //   updateLegend(id) {
-    //     let filter = this._map.getFilter("crashes");
-    //     if (filter) {
-    //       const [any, ...filters] = filter[2];
-    //       filter[2] = [
-    //         any,
-    //         ...toggle(filters, ["in", this.field, id], (item) => item[2]),
-    //       ];
-    //       this._map.setFilter("crashes", filter);
-    //     }
-    //   }
-    // }
-    // map.addControl(
-    //   new legendControl(kabcoVals),
-    //   "top-right"
-    // );
   } // end createGeoJson
 
   // Function to calculate crash statistics
