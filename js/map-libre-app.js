@@ -40,8 +40,8 @@
 
   // Load data from remote source using D3 and async/await
   async function fetchData() {
-    const data = await d3.csv("/data/Fayette_2023Crashes_KABCO.csv");
-    const sidecar = await d3.csv("/data/factors.csv");
+    const data = await d3.csv("data/Fayette_2023Crashes_KABCO.csv");
+    const sidecar = await d3.csv("data/factors.csv");
     console.log(data, sidecar);
     createGeoJson(data, sidecar);
   }
