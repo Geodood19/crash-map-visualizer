@@ -37,8 +37,8 @@
 
   // Load data from remote source using D3 and async/await
   async function fetchData() {
-    const data = await d3.csv("data/Fayette_2023Crashes_KABCO.csv");
-    const sidecar = await d3.csv("data/factors.csv");
+    const data = await d3.csv("/data/Fayette_2023Crashes_KABCO.csv");
+    const sidecar = await d3.csv("/data/factors.csv");
     console.log(data, sidecar);
     createGeoJson(data, sidecar);
   }
@@ -212,13 +212,13 @@
             ["heatmap-density"],
             0,
             "rgba(33,102,172,0)",
-            0.2,
+            0.3,
             "rgba(103,169,207,0.75)",
-            0.4,
+            0.5,
             "rgba(209,229,240,0.9)",
-            0.7,
+            0.8,
             "rgb(253,219,199)",
-            0.9,
+            0.95,
             "rgb(239,138,98)",
             1,
             "rgb(178,24,43)",
@@ -238,9 +238,9 @@
             "interpolate",
             ["linear"],
             ["zoom"],
-            9, // the most zoomed out zoom level will have...
-            0.95, // ...a 95% opacity on the heat layer (5% transparency), which will smoothly transition to...
-            15, // ...zoom level 15, which will have an opacity of....
+            10, // the most zoomed out zoom level will have...
+            0.75, // ...a 75% opacity on the heat layer (25% transparency), which will smoothly transition to...
+            14, // ...zoom level 14, which will have an opacity of....
             0, // 0%, or 100% transparent
           ],
         },
