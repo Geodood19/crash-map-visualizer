@@ -37,13 +37,14 @@
 
   // Load data from remote source using D3 and async/await
   async function fetchData() {
-    const data = await d3.csv("../data/Fayette_2023Crashes_KABCO.csv");
-    const sidecar = await d3.csv("../data/factors.csv");
+    const data = await d3.csv("data/Fayette_2023Crashes_KABCO.csv");
+    const sidecar = await d3.csv("data/factors.csv");
     console.log(data, sidecar);
     createGeoJson(data, sidecar);
   }
 
   fetchData(); // invokes the fetchData function
+  // console.log(data);
 
   function createGeoJson(data, sidecar) {
     const geojson = {
@@ -95,17 +96,32 @@
     // need to add the ability to define KABCO colors
     // access KABCO values in the data array
     const KABCO = data.map((d) => d.KABCO);
-    console.log(KABCO); // This will log an array of KABCO values
+    // console.log(KABCO); // This will log an array of KABCO values
 
     // add breakdown for colorizing KABCO values
     // id will be used to match the value in KABCO with the id property in the kabcoVals object
     // Add prop for checked to determine if the KABCO value is visible
     const kabcoVals = [
       { id: "1", text: "Fatal Crash", color: "#FF0000", checked: true },
-      { id: "2", text: "Serious Injury Crash", color: "#ff7b00", checked: true },
+      {
+        id: "2",
+        text: "Serious Injury Crash",
+        color: "#ff7b00",
+        checked: true,
+      },
       { id: "3", text: "Minor Injury Crash", color: "#f5ee22", checked: true },
-      { id: "4", text: "Possible Injury Crash", color: "#05fa3a", checked: true },
-      { id: "5", text: "Property Damage Only", color: "#1953ff", checked: true },
+      {
+        id: "4",
+        text: "Possible Injury Crash",
+        color: "#05fa3a",
+        checked: true,
+      },
+      {
+        id: "5",
+        text: "Property Damage Only",
+        color: "#1953ff",
+        checked: true,
+      },
     ];
 
     // Build the legend from CSS and the kabcoVals array
@@ -140,9 +156,11 @@
           }
         });
         // Use the filter expression and setFilter method to filter the data
-        const filter = ['in', // Filter the data to only include the KABCO values in the array
-          ['get', 'KABCO'], // The attribute field to filter on
-          ['literal', categories]]
+        const filter = [
+          "in", // Filter the data to only include the KABCO values in the array
+          ["get", "KABCO"], // The attribute field to filter on
+          ["literal", categories],
+        ];
         map.setFilter("crashes", filter);
       });
     });
@@ -159,9 +177,10 @@
         id: "crashes",
         type: "circle",
         source: "crashes",
-        filter: ['in', // Filter the data to only include the KABCO values in the array
-          ['get', 'KABCO'], // The attribute field to filter on
-          ['literal', ['1', '2', '3', '4', '5']] // The values to include
+        filter: [
+          "in", // Filter the data to only include the KABCO values in the array
+          ["get", "KABCO"], // The attribute field to filter on
+          ["literal", ["1", "2", "3", "4", "5"]], // The values to include
         ],
         paint: {
           "circle-radius": 5,
@@ -172,7 +191,6 @@
           "circle-stroke-width": 0.75,
           "circle-stroke-color": "#222",
         },
-        
       });
       // console.log(crashes);
 
@@ -232,6 +250,7 @@
       map.on("click", "crashes", function (e) {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const d = e.features[0].properties;
+        const popup = document.getElementById("info");
         let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${d.STATS}<br>ID: ${d.ID}<br>Collision Time: ${d.Time}`;
         if (d.xtra) {
           description += `<br><strong>Factors:</strong><ul>${d.xtra}</ul>`;
@@ -251,12 +270,10 @@
       });
     }); // end map.on function to add crashes
 
-    // allow crashStats fx to access the data by passing it before the end of the fx
-    crashStats(data);
     // using the array of KABCO and kabcoVals, create a createFillColor function to determine color to paint the crashes
     function createFillColor(kabcoVals) {
       const colors = kabcoVals.reduce((agg, item) => {
-        console.log(agg);
+        // console.log(agg);
         agg.push(item.id);
         agg.push(item.color);
         return agg;
@@ -270,29 +287,7 @@
       return ["match", ["get", "KABCO"], ...colors, "#CCC"];
     }
 
-    // now we will add a controllable legend
-    // need to create a function to create the legend filter
-    const createFilter = (kabcoVals) => {
-      const filters = kabcoVals.reduce((agg, item) => {
-        agg.push(["in", kabcoVals, item.id]);
-        return agg;
-      }, []);
-      return ["all", ["==", "$type", "Point"], ["any", ...filters]];
-    };
-
-    // need to now create functions that toggle the visibility of the categories
-    const removeAtIndex = (arr, index) => {
-      const copy = [...ar];
-      copy.slice(index, i);
-      return copy;
-    };
-
-    const toggle = (arr, item, getValue = (item) => item) => {
-      const index = arr.findIndex((i) => getValue(i) === getValue(item));
-      if (index === -1) return [...arr, item];
-      return removeAtIndex(arr, index);
-    };
-
+    crashStats(data);
   } // end createGeoJson
 
   // Function to calculate crash statistics
@@ -323,8 +318,5 @@
     });
 
     console.log(stats);
-    // drawLegend(data, stats);
   }
-
-  // function to draw the legend
 })();
