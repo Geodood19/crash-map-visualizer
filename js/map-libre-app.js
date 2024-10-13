@@ -97,6 +97,7 @@
     console.log(KABCO); // This will log an array of KABCO values
 
     // add breakdown for colorizing KABCO values
+    // id will be used to match the value in KABCO with the id property in the kabcoVals object
     const kabcoVals = [
       { id: "1.0", text: "Fatal Crash", color: "#FF0000" },
       { id: "2.0", text: "Serious Injury Crash", color: "#ff7b00" },
@@ -126,6 +127,7 @@
           "circle-stroke-width": 0.75,
           "circle-stroke-color": "#222",
         },
+        // filter: createFilter(kabcoVals),
       });
       // console.log(crashes);
 
@@ -214,14 +216,101 @@
         agg.push(item.color);
         return agg;
       }, []);
-      console.log(`["match", ["literal", ["get", 'KABCO']], ${colors}, "#CCC"]`);
-      // Style expressions are tricky. They use strings and arrays to create a style. 
+      console.log(
+        `["match", ["literal", ["get", 'KABCO']], ${colors}, "#CCC"]`
+      );
+      // Style expressions are tricky. They use strings and arrays to create a style.
       // This is a match expression that uses KABCO value to determine the color of the circle.
       // KABCO is not a variable in this case.
-      return ["match", ["get", 'KABCO'], ...colors, "#CCC"];
+      return ["match", ["get", "KABCO"], ...colors, "#CCC"];
+    }
+
+    // now we will add a controllable legend
+    // need to create a function to create the legend filter
+    const createFilter = (kabcoVals) => {
+      const filters = kabcoVals.reduce((agg, item) => {
+        agg.push(["in", kabcoVals, item.id]);
+        return agg;
+      }, []);
+      return ["all", ["==", "$type", "Point"], ["any", ...filters]];
     };
 
-    // also need to allow access to the geoJson that is being mapped
+    // need to now create functions that toggle the visibility of the categories
+    const removeAtIndex = (arr, index) => {
+      const copy = [...ar];
+      copy.slice(index, i);
+      return copy;
+    };
+
+    const toggle = (arr, item, getValue = (item) => item) => {
+      const index = arr.findIndex((i) => getValue(i) === getValue(item));
+      if (index === -1) return [...arr, item];
+      return removeAtIndex(arr, index);
+    };
+
+    // Now add the legend control map element
+    // map.addControl(gc, "top-left");
+
+    class legendControl {
+      constructor(categories, field) {
+        this.categories = categories;
+        this.field = field;
+      }
+
+      onAdd(map) {
+        this._map = map;
+        this._container = document.createElement("div");
+        this._container.className = "maplibregl-ctrl";
+        const _fragment = document.createDocumentFragment();
+        const _nav = document.createElement("nav");
+        _nav.className = "maplibregl-ctrl legend";
+        _nav.id = "legend";
+        _fragment.appendChild(_nav);
+        this.categories.forEach((element) => {
+          const _input = document.createElement("input");
+          _input.type = "checkbox";
+          _input.id = element.id;
+          _input.className = "input-layers";
+          _input.checked = true;
+          const this_ = this;
+          _input.addEventListener("change", function (e) {
+            this_.updateLegend(e.target.id);
+          });
+          const _label = document.createElement("label");
+          _label.htmlFor = element.id;
+          const _text = document.createTextNode(element.text);
+          const _legend = document.createElement("i");
+          _legend.style.backgroundColor = element.color;
+          _label.appendChild(_text);
+          _label.appendChild(_legend);
+          _nav.appendChild(_input);
+          _nav.appendChild(_label);
+        });
+        this._container.appendChild(_fragment);
+        return this._container;
+      }
+
+      onRemove() {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+      }
+
+      updateLegend(id) {
+        let filter = this._map.getFilter("crashes");
+        if (filter) {
+          const [any, ...filters] = filter[2];
+          filter[2] = [
+            any,
+            ...toggle(filters, ["in", this.field, id], (item) => item[2]),
+          ];
+          this._map.setFilter("crashes", filter);
+        }
+      }
+    }
+    map.addControl(
+      new legendControl(kabcoVals),
+      "top-right"
+    );
   } // end createGeoJson
 
   // Function to calculate crash statistics
@@ -256,9 +345,4 @@
   }
 
   // function to draw the legend
-  // function drawLegend(_data, _stats) {
-  //   // example of legend control found here: https://www.maptiler.com/news/2022/04/custom-map-portal-a-start-to-end-guide/
-  //   // need to create a function to filter layer
-  //   // const createFilter =
-  // }
 })();
