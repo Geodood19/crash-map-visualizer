@@ -319,13 +319,15 @@
       } else {
         stats.KABCO[d.KABCO] = 1;
       }
-      if (
-        d.MannerofCollision in stats.MannerofCollision &&
-        d.MannerofCollision !== ""
-      ) {
-        stats.MannerofCollision[d.MannerofCollision]++;
+      // Handle Manner of Collision, including invalid or missing data
+      let collisionType =
+        d.MannerofCollision && d.MannerofCollision.trim() !== ""
+          ? d.MannerofCollision
+          : "UNKNOWN"; // Assign "Unknown" if data is missing or invalid
+      if (collisionType in stats.MannerofCollision) {
+        stats.MannerofCollision[collisionType]++;
       } else {
-        stats.MannerofCollision[d.MannerofCollision] = 1;
+        stats.MannerofCollision[collisionType] = 1;
       }
       if (+d.NumberKilled) {
         stats.NumberKilled += +d.NumberKilled;
@@ -337,12 +339,23 @@
 
     console.log(stats);
 
+    // Take manner of collision data and add it to the crash statistics div
+    // manner of collision in the stats function is an array of arrays, which is hard to parse out
+    // need to separate the inner from the outer arrays
+    let mannerOfColStats = "";
+    for (const [type, count] of Object.entries(stats.MannerofCollision)) {
+      mannerOfColStats += `<strong>${type}</strong>: ${count.toLocaleString()}<br>`; // takes the collision type (angle, single vehicle, etc) and the count for each to a string
+    }
+
     // define the data into HTML which we will place inside a defined div element
     const crashData = `
+        <strong>CRASH STATISTICS</strong><br><br>
         <strong>Number Killed</strong>: ${stats.NumberKilled}<br>
-        <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br>
+        <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br><br>
+        <strong>Manner of Collision</strong>:<br>
+    <ul>${mannerOfColStats}</ul>
     `;
-    // what is inside the stats div is now going to be equal to what we defined in crashData
+    // what is inside the stats div is now going to be equal to what we defined in crashData, taken from the crashStats fx
     // stats is defined in the CSS
     document.getElementById("stats").innerHTML = crashData;
   }

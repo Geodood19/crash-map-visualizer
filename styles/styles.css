@@ -117,6 +117,7 @@
     right: 7px;
     cursor: pointer;
   }
+
   #legend {
     font-family: "Libre Franklin", sans-serif;
     position: absolute;
@@ -279,4 +280,5 @@
     color: whitesmoke;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.32);
     border-radius: 5px;
+    /* display: none;  */
   }
