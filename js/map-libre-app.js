@@ -360,9 +360,7 @@
   }
 
   // Toggle function to hide/show crash stats
-  document
-    .getElementById("stats-button")
-    .addEventListener("click", function () {
+  document.getElementById("stats-button").addEventListener("click", function () {
       const statsDiv = document.getElementById("stats");
 
       if (statsDiv.style.display === "none" || statsDiv.style.display === "") {
@@ -372,4 +370,19 @@
         statsDiv.style.display = "none";
       }
     });
+
+  // Hide stats when clicking outside
+  document.addEventListener("click", function (event) {
+    const statsDiv = document.getElementById("stats");
+    const statsButton = document.getElementById("stats-button");
+
+    // Check if the click target is not the stats div or the button
+    if (
+      statsDiv.style.display === "block" &&
+      !statsDiv.contains(event.target) &&
+      !statsButton.contains(event.target)
+    ) {
+      statsDiv.style.display = "none";
+    }
+  });
 })();
