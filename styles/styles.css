@@ -172,44 +172,6 @@
     margin-right: 10px;
   }
 
-  .legend-toggle input[type='checkbox']:first-child + label {
-    border-radius: 6px 6px 0 0;
-  }
-
-  .legend-toggle label:last-child {
-    border-radius: 0 0 6px 6px;
-    border: none;
-  }
-
-  .legend-toggle input[type='checkbox'] {
-    display: none;
-  }
-  .legend-toggle input[type='checkbox'] + label {
-    display: block;
-    cursor: pointer;
-    padding: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
-    text-transform: capitalize;
-  }
-  .legend-toggle input[type='checkbox'] + label i {
-    width: 18px;
-    height: 18px;
-    float: right;
-    margin-right: 0 8px;
-    opacity: 0.7;
-  }
-  .legend-toggle input[type='checkbox'] + label:hover {
-    background-color: rgba(49, 112, 254, 0.05);
-  }
-  .legend-toggle input[type='checkbox'] + label:before {
-    content: '';
-    margin-right: 15px;
-  }
-  .legend-toggle input[type='checkbox']:checked + label:before {
-    content: '✔';
-    margin-right: 5px;
-  }
-
   /* Small devices (portrait phones, 576px and below) */
   @media (max-width: 576px) and (orientation: portrait) {
     h1 {
@@ -250,7 +212,7 @@
     margin-right: -15px;
   }
 
-  .year-slider {
+  .time-slider {
     width: 100%;
   }
 
@@ -268,17 +230,50 @@
     /* position: absolute; */
   }
 
-  #stats {
-    font-family: "Libre Franklin", sans-serif;
+  h3 {
     position: absolute;
     z-index: 650;
     bottom: 10px;
-    left: 10px;
-    padding: 6px 8px;
+    left: 15px;
+    padding: 8px 15px;
+    margin: 0;
+    color: whitesmoke;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    background: rgba(25, 25, 25, 0.8);
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  h3:hover {
+    background: rgb(100, 100, 100);
+  }
+
+  h3:active {
+    background: #0063e4;
+  }
+
+  #stats {
+    font-family: "Libre Franklin", sans-serif;
+    display: none;
+    position: absolute;
+    z-index: 650;
+    bottom: 60px;
+    left: 15px;
+    padding: 8px 15px;
     font-size: 1em;
     background: rgba(25, 25, 25, 0.8);
     color: whitesmoke;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.32);
     border-radius: 5px;
-    /* display: none;  */
+  }
+
+  #stats .container {
+    width: 500px;
+    margin: 10px auto;
+    padding: 5px 20px;
+    position: relative;
+    background: rgba(25, 25, 25, 0.8);
+    border-radius: 5px;
+    border: #0d0000 1px solid;
   }

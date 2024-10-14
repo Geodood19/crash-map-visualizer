@@ -349,7 +349,6 @@
 
     // define the data into HTML which we will place inside a defined div element
     const crashData = `
-        <strong>CRASH STATISTICS</strong><br><br>
         <strong>Number Killed</strong>: ${stats.NumberKilled}<br>
         <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br><br>
         <strong>Manner of Collision</strong>:<br>
@@ -359,4 +358,18 @@
     // stats is defined in the CSS
     document.getElementById("stats").innerHTML = crashData;
   }
+
+  // Toggle function to hide/show crash stats
+  document
+    .getElementById("stats-button")
+    .addEventListener("click", function () {
+      const statsDiv = document.getElementById("stats");
+
+      if (statsDiv.style.display === "none" || statsDiv.style.display === "") {
+        // Stats are already calculated and inserted in crashStats function
+        statsDiv.style.display = "block";
+      } else {
+        statsDiv.style.display = "none";
+      }
+    });
 })();
