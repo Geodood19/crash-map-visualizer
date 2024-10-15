@@ -29,13 +29,20 @@
     <h2 id="button">Info</h2>
     <div id="map"></div>
     <h3 id="stats-button">Crash Statistics</h3>
-    <!-- <div id="ui-controls">
-    <label>
-      <span class="min">00:00 to 02:59</span>
-      <span class="max">21:00 to 23:59</span>
-      <input type="range" min="00:00 to 02:59" max="21:00 to 23:59" value="00:00 to 02:59" step="1" class="time-slider" />
-    </label>
-  </div> -->
+    <div id="slider-controls">
+      <label>
+        <span class="min">0001</span>
+        <span class="max">0000</span>
+        <input
+          type="range"
+          min="1"
+          max="8"
+          value="0"
+          step="1"
+          class="time-slider"
+        />
+      </label>
+    </div>
 
     <div id="legend"></div>
     <div id="stats">
@@ -43,12 +50,13 @@
     </div>
     <div id="modal">
       <div class="container">
-        <span>
-          &times;
-        </span>
+        <span> &times; </span>
         <div class="title">Data Source and Methods</div>
         <p>Data downloaded for Fayette County, KY for 2023.</p>
-        <p>Crash Data was manipulated using Microsoft Excel for use in this web map application.</p>
+        <p>
+          Crash Data was manipulated using Microsoft Excel for use in this web
+          map application.
+        </p>
 
         <p>
           Crash Data acquired from KYTC's Public Records:

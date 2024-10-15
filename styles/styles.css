@@ -193,7 +193,7 @@
     }
   }
 
-  #ui-controls {
+  #slider-controls {
     font-family: "Libre Franklin", sans-serif;
     width: 176px;
     padding: 8px 25px 8px 15px;
@@ -203,11 +203,11 @@
     color: whitesmoke;
   }
 
-  #ui-controls .min {
+  #slider-controls .min {
     float: left;
   }
 
-  #ui-controls .max {
+  #slider-controls .max {
     float: right;
     margin-right: -15px;
   }

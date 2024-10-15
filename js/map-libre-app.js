@@ -228,7 +228,6 @@
           "circle-stroke-color": "#222",
         },
       });
-      // console.log(crashes);
 
       // add heat layer using mapLibre (Documentation: https://maplibre.org/maplibre-gl-js/docs/examples/heatmap-layer/)
       map.addLayer({
@@ -327,6 +326,7 @@
     }
 
     crashStats(data);
+
   } // end createGeoJson
 
   // Function to calculate crash statistics
@@ -382,31 +382,4 @@
     // stats is defined in the CSS
     document.getElementById("stats").innerHTML = crashData;
   }
-
-  // Toggle function to hide/show crash stats
-  document.getElementById("stats-button").addEventListener("click", function () {
-      const statsDiv = document.getElementById("stats");
-
-      if (statsDiv.style.display === "none" || statsDiv.style.display === "") {
-        // Stats are already calculated and inserted in crashStats function
-        statsDiv.style.display = "block";
-      } else {
-        statsDiv.style.display = "none";
-      }
-    });
-
-  // Hide stats when clicking outside
-  document.addEventListener("click", function (event) {
-    const statsDiv = document.getElementById("stats");
-    const statsButton = document.getElementById("stats-button");
-
-    // Check if the click target is not the stats div or the button
-    if (
-      statsDiv.style.display === "block" &&
-      !statsDiv.contains(event.target) &&
-      !statsButton.contains(event.target)
-    ) {
-      statsDiv.style.display = "none";
-    }
-  });
 })();
