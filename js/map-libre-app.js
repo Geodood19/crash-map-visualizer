@@ -7,6 +7,8 @@
   const statsWindow = document.querySelector("#stats");
   const statsButton = document.querySelector("#stats-button");
 
+  let chartDrawn = false;
+
   statsButton.addEventListener("click", function () {
     if (
       statsWindow.style.display === "none" ||
@@ -81,6 +83,32 @@
     );
   }
 
+  function getTimeGroup(data) {
+    const timeGroup = parseInt(data.CollisionTime);
+
+    if (timeGroup >= 0 && timeGroup <= 299) {
+      return "0000 - 0299"; 
+    } else if (timeGroup >= 300 && timeGroup <= 599) {
+      return "0300 - 0599"; 
+    } else if (timeGroup >= 600 && timeGroup <= 899) {
+      return "0600 - 0899"; 
+    } else if (timeGroup >= 900 && timeGroup <= 1199) {
+      return "0900 - 1199"; 
+    } else if (timeGroup >= 1200 && timeGroup <= 1499) {
+      return "1200 - 1499"; 
+    } else if (timeGroup >= 1500 && timeGroup <= 1799) {
+      return "1500 - 1799"; 
+    } else if (timeGroup >= 1800 && timeGroup <= 2099) {
+      return "1800 - 2099"; 
+    } else if (timeGroup >= 2100 && timeGroup <= 2399) {
+      return "2100 - 2399"; 
+    }
+
+    return "ALL"; // Default for showing all crashes if no time matches
+
+    filterBy();
+  }
+
   function createGeoJson(data, sidecar) {
     const geojson = {
       type: "FeatureCollection",
@@ -93,6 +121,7 @@
             STATS: `Injuries: ${d.NumberInjured} | Fatalities: ${d.NumberKilled}`,
             ID: d.IncidentID,
             Time: d.CollisionTime,
+            TimeGroup: getTimeGroup(d.CollisionTime),
             MannerofCollision: d.MannerofCollision,
             xtra: "",
           },
@@ -267,9 +296,9 @@
             "rgba(103,169,207,0.75)",
             0.5,
             "rgba(209,229,240,0.9)",
-            0.8,
+            0.75,
             "rgb(253,219,199)",
-            0.95,
+            0.9,
             "rgb(239,138,98)",
             1,
             "rgb(178,24,43)",
@@ -322,6 +351,23 @@
       map.on("mouseleave", "crashes", function () {
         map.getCanvas().style.cursor = "";
       });
+
+      
+      filterBy();
+
+      function filterBy(data) {
+        const filters = ['==', 'TimeGroup', data.TimeGroup];
+        map.setFilter('crashes', filters);
+        map.setFilter('heatLayer', filters);
+
+        // set the label to the time group
+        document.getElementById('Time Group').textContent = timeGroup[data.TimeGroup];
+      }
+
+      document.getElementById('slider-controls').addEventListener('input', (e) => {
+        const time = parseInt(e.target.value, 10);
+        filterBy(time);
+      });
     }); // end map.on function to add crashes
 
     // using the array of KABCO and kabcoVals, create a createFillColor function to determine color to paint the crashes
@@ -342,7 +388,6 @@
     }
 
     crashStats(data);
-    
   } // end createGeoJson
 
   // Function to calculate crash statistics
@@ -383,8 +428,14 @@
     // manner of collision in the stats function is an array of arrays, which is hard to parse out
     // need to separate the inner from the outer arrays
     let mannerOfColStats = "";
-    for (const [type, count] of Object.entries(stats.MannerofCollision)) {
+
+    const mannerSorted = {};
+    for (const [type, count] of Object.entries(stats.MannerofCollision).sort(
+      (a, b) => b[1] - a[1]
+    )) {
       mannerOfColStats += `<strong>${type}</strong>: ${count.toLocaleString()}<br>`; // takes the collision type (angle, single vehicle, etc) and the count for each to a string
+      mannerSorted[type] = count;
+      // console.log(mannerSorted);
     }
 
     // define the data into HTML which we will place inside a defined div element
@@ -397,5 +448,49 @@
     // what is inside the stats div is now going to be equal to what we defined in crashData, taken from the crashStats fx
     // stats is defined in the CSS
     document.getElementById("stats").innerHTML = crashData;
+
+    drawChart(stats, mannerSorted);
+  } // end crashStats
+
+  // function to draw chart
+  function drawChart(stats, mannerSorted) {
+    // select the HTML element that will hold our chart
+    const barChart = d3.select("#bar-chart");
+
+    // determine the width and height of chart from container
+    const width = barChart.node().offsetWidth - 40;
+
+    // append a new SVG element to the container
+    const svg = barChart.append("svg").attr("width", width).attr("height", 380);
+
+    // x scale determines how wide each bar will be
+    const x = d3
+      .scaleLinear()
+      .range([0, width])
+      .domain([0, d3.max(mannerSorted, (d) => d[1])]);
+
+    // y scale determines how tall each bar will be
+    const y = d3
+      .scaleBand()
+      .range([380, 0])
+      .domain(mannerSorted.map((d) => d[0]));
+
+    color = d3
+      .scaleOrdinal(d3.schemeTableau10)
+      .domain(mannerSorted.map((d) => d[0]));
+
+    // append a new SVG group to the SVG element
+    svg
+      .append("g")
+      .selectAll("rect")
+      .data(mannerSorted)
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("y", (d) => y(d[0]))
+      .attr("height", y.bandwidth())
+      .attr("x", 0)
+      .attr("width", (d) => x(d[1]))
+      .attr("fill", (d) => color(d[0]));
   }
 })();
