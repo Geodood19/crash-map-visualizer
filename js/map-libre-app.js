@@ -138,24 +138,39 @@
     // id will be used to match the value in KABCO with the id property in the kabcoVals object
     // Add prop for checked to determine if the KABCO value is visible
     const kabcoVals = [
-      { id: "1", text: "Fatal Crash", color: "#FF0000", checked: true },
+      {
+        id: "1",
+        text: "Fatal Crash",
+        color: "#FF0000",
+        size: "10",
+        checked: true,
+      },
       {
         id: "2",
         text: "Serious Injury Crash",
         color: "#ff7b00",
+        size: "8",
         checked: true,
       },
-      { id: "3", text: "Minor Injury Crash", color: "#f5ee22", checked: true },
+      {
+        id: "3",
+        text: "Minor Injury Crash",
+        color: "#f5ee22",
+        size: "6",
+        checked: true,
+      },
       {
         id: "4",
         text: "Possible Injury Crash",
         color: "#05fa3a",
+        size: "4",
         checked: true,
       },
       {
         id: "5",
         text: "Property Damage Only",
         color: "#1953ff",
+        size: "2.5",
         checked: true,
       },
     ];
@@ -198,6 +213,7 @@
           ["literal", categories],
         ];
         map.setFilter("crashes", filter);
+        map.setFilter("heatLayer", filter);
       });
     });
 
@@ -326,7 +342,7 @@
     }
 
     crashStats(data);
-
+    
   } // end createGeoJson
 
   // Function to calculate crash statistics
