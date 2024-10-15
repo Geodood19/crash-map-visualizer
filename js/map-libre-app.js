@@ -3,6 +3,30 @@
   const modal = document.querySelector("#modal");
   const button = document.querySelector("#button");
   const h1 = document.querySelector("h1");
+  const h3 = document.querySelector("h3");
+  const statsWindow = document.querySelector("#stats");
+  const statsButton = document.querySelector("#stats-button");
+
+  statsButton.addEventListener("click", function () {
+    if (
+      statsWindow.style.display === "none" ||
+      statsWindow.style.display === ""
+    ) {
+      statsWindow.style.display = "block";
+    } else {
+      statsWindow.style.display = "none";
+    }
+  });
+
+  document.addEventListener("click", function (e) {
+    if (
+      statsWindow.style.display === "block" &&
+      !statsWindow.contains(e.target) &&
+      !statsButton.contains(e.target)
+    ) {
+      statsWindow.style.display = "none";
+    }
+  });
 
   // display modal when button is clicked
   button.addEventListener("click", function () {
