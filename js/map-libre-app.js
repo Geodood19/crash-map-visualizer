@@ -87,21 +87,21 @@
     const timeGroup = parseInt(data.CollisionTime);
 
     if (timeGroup >= 0 && timeGroup <= 299) {
-      return "0000 - 0299"; 
+      return "0000 - 0299";
     } else if (timeGroup >= 300 && timeGroup <= 599) {
-      return "0300 - 0599"; 
+      return "0300 - 0599";
     } else if (timeGroup >= 600 && timeGroup <= 899) {
-      return "0600 - 0899"; 
+      return "0600 - 0899";
     } else if (timeGroup >= 900 && timeGroup <= 1199) {
-      return "0900 - 1199"; 
+      return "0900 - 1199";
     } else if (timeGroup >= 1200 && timeGroup <= 1499) {
-      return "1200 - 1499"; 
+      return "1200 - 1499";
     } else if (timeGroup >= 1500 && timeGroup <= 1799) {
-      return "1500 - 1799"; 
+      return "1500 - 1799";
     } else if (timeGroup >= 1800 && timeGroup <= 2099) {
-      return "1800 - 2099"; 
+      return "1800 - 2099";
     } else if (timeGroup >= 2100 && timeGroup <= 2399) {
-      return "2100 - 2399"; 
+      return "2100 - 2399";
     }
 
     return "ALL"; // Default for showing all crashes if no time matches
@@ -330,11 +330,9 @@
       map.on("click", "crashes", function (e) {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const d = e.features[0].properties;
-        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${
-          d.STATS
-        }<br>ID: ${d.ID}<br>Collision Time: ${
-          d.Time
-        }<br>Manner of Collision: ${toTitleCase(d.MannerofCollision)}`;
+        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${d.STATS
+          }<br>ID: ${d.ID}<br>Collision Time: ${d.Time
+          }<br>Manner of Collision: ${toTitleCase(d.MannerofCollision)}`;
         if (d.xtra) {
           description += `<br><strong>Factors:</strong><ul>${d.xtra}</ul>`;
         }
@@ -352,8 +350,8 @@
         map.getCanvas().style.cursor = "";
       });
 
-      
-      filterBy();
+
+      filterBy(); // not passing any data?
 
       function filterBy(data) {
         const filters = ['==', 'TimeGroup', data.TimeGroup];
@@ -447,21 +445,28 @@
     `;
     // what is inside the stats div is now going to be equal to what we defined in crashData, taken from the crashStats fx
     // stats is defined in the CSS
-    document.getElementById("stats").innerHTML = crashData;
-
-    drawChart(stats, mannerSorted);
+    document.querySelector("#stats .container").innerHTML = crashData;
+    // Need an array of the manner of collision data
+    d3Sorted = Object.entries(stats.MannerofCollision).sort((a, b) => b[1] - a[1]);
+    drawChart(stats, d3Sorted);
   } // end crashStats
 
   // function to draw chart
+  // This needs some more noodling to get the chart to display correctly
   function drawChart(stats, mannerSorted) {
+    console.log(mannerSorted)
     // select the HTML element that will hold our chart
     const barChart = d3.select("#bar-chart");
 
     // determine the width and height of chart from container
-    const width = barChart.node().offsetWidth - 40;
+    // const width = barChart.offsetWidth - 40;
+    const width = 380;
 
     // append a new SVG element to the container
-    const svg = barChart.append("svg").attr("width", width).attr("height", 380);
+    const svg = barChart
+      .append("svg")
+      .attr("width", width)
+      .attr("height", 380)
 
     // x scale determines how wide each bar will be
     const x = d3
@@ -490,7 +495,7 @@
       .attr("y", (d) => y(d[0]))
       .attr("height", y.bandwidth())
       .attr("x", 0)
-      .attr("width", (d) => x(d[1]))
+      .attr("width", 100) // (d) => x(d[1])
       .attr("fill", (d) => color(d[0]));
   }
 })();
