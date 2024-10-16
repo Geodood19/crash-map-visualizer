@@ -47,6 +47,19 @@
     button.style.top = h1.offsetHeight + 20 + "px";
   }
 
+  // Create global div for the tooltip and hide with opacity
+  const tooltip = d3
+    .select("body")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("background-color", "#FFFAF0")
+    .style("stroke", "black")
+    .style("stroke-width", "1px")
+    .style("padding", "10px")
+    .style("border-radius", "5px")
+    .style("z-index", 5000);
+
   // Add event listener for window resize
   // When page rotates or is resized, reset page UI
   window.addEventListener("resize", buttonUI);
@@ -83,31 +96,29 @@
     );
   }
 
-  function getTimeGroup(data) {
-    const timeGroup = parseInt(data.CollisionTime);
+  // function getTimeGroup(data) {
+  //   const timeGroup = parseInt(data.CollisionTime);
 
-    if (timeGroup >= 0 && timeGroup <= 299) {
-      return "0000 - 0299";
-    } else if (timeGroup >= 300 && timeGroup <= 599) {
-      return "0300 - 0599";
-    } else if (timeGroup >= 600 && timeGroup <= 899) {
-      return "0600 - 0899";
-    } else if (timeGroup >= 900 && timeGroup <= 1199) {
-      return "0900 - 1199";
-    } else if (timeGroup >= 1200 && timeGroup <= 1499) {
-      return "1200 - 1499";
-    } else if (timeGroup >= 1500 && timeGroup <= 1799) {
-      return "1500 - 1799";
-    } else if (timeGroup >= 1800 && timeGroup <= 2099) {
-      return "1800 - 2099";
-    } else if (timeGroup >= 2100 && timeGroup <= 2399) {
-      return "2100 - 2399";
-    }
+  //   if (timeGroup >= 0 && timeGroup <= 299) {
+  //     return "0000 - 0299";
+  //   } else if (timeGroup >= 300 && timeGroup <= 599) {
+  //     return "0300 - 0599";
+  //   } else if (timeGroup >= 600 && timeGroup <= 899) {
+  //     return "0600 - 0899";
+  //   } else if (timeGroup >= 900 && timeGroup <= 1199) {
+  //     return "0900 - 1199";
+  //   } else if (timeGroup >= 1200 && timeGroup <= 1499) {
+  //     return "1200 - 1499";
+  //   } else if (timeGroup >= 1500 && timeGroup <= 1799) {
+  //     return "1500 - 1799";
+  //   } else if (timeGroup >= 1800 && timeGroup <= 2099) {
+  //     return "1800 - 2099";
+  //   } else if (timeGroup >= 2100 && timeGroup <= 2399) {
+  //     return "2100 - 2399";
+  //   }
 
-    return "ALL"; // Default for showing all crashes if no time matches
-
-    filterBy();
-  }
+  //   return "ALL"; // Default for showing all crashes if no time matches
+  // }
 
   function createGeoJson(data, sidecar) {
     const geojson = {
@@ -121,7 +132,7 @@
             STATS: `Injuries: ${d.NumberInjured} | Fatalities: ${d.NumberKilled}`,
             ID: d.IncidentID,
             Time: d.CollisionTime,
-            TimeGroup: getTimeGroup(d.CollisionTime),
+            // TimeGroup: getTimeGroup(d.CollisionTime),
             MannerofCollision: d.MannerofCollision,
             xtra: "",
           },
@@ -330,9 +341,11 @@
       map.on("click", "crashes", function (e) {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const d = e.features[0].properties;
-        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${d.STATS
-          }<br>ID: ${d.ID}<br>Collision Time: ${d.Time
-          }<br>Manner of Collision: ${toTitleCase(d.MannerofCollision)}`;
+        let description = `<strong>KABCO:</strong> ${d.KABCO}<br>${
+          d.STATS
+        }<br>ID: ${d.ID}<br>Collision Time: ${
+          d.Time
+        }<br>Manner of Collision: ${toTitleCase(d.MannerofCollision)}`;
         if (d.xtra) {
           description += `<br><strong>Factors:</strong><ul>${d.xtra}</ul>`;
         }
@@ -350,22 +363,24 @@
         map.getCanvas().style.cursor = "";
       });
 
+      filterBy(geojson); // not passing any data?
 
-      filterBy(); // not passing any data?
+      // function filterBy(geojson) {
+      //   const filters = ["==", "CollisionTime", geojson.features[0].properties];
+      //   map.setFilter("crashes", filters);
+      //   map.setFilter("heatLayer", filters);
 
-      function filterBy(data) {
-        const filters = ['==', 'TimeGroup', data.TimeGroup];
-        map.setFilter('crashes', filters);
-        map.setFilter('heatLayer', filters);
+      //   // set the label to the time group
+      //   document.getElementById("CollisionTime").textContent =
+      //     data.CollisionTime;
+      // }
 
-        // set the label to the time group
-        document.getElementById('Time Group').textContent = timeGroup[data.TimeGroup];
-      }
-
-      document.getElementById('slider-controls').addEventListener('input', (e) => {
-        const time = parseInt(e.target.value, 10);
-        filterBy(time);
-      });
+      // document
+      //   .getElementById("slider-controls")
+      //   .addEventListener("input", (e) => {
+      //     const time = parseInt(e.target.value, 10);
+      //     filterBy(time);
+      //   });
     }); // end map.on function to add crashes
 
     // using the array of KABCO and kabcoVals, create a createFillColor function to determine color to paint the crashes
@@ -391,111 +406,191 @@
   // Function to calculate crash statistics
   function crashStats(data) {
     const stats = {
-      KABCO: {},
       MannerofCollision: {},
+      InjuryKilledStats: {},
       NumberKilled: 0,
       NumberInjured: 0,
     };
+
     data.forEach(function (d) {
-      if (d.KABCO in stats.KABCO) {
-        stats.KABCO[d.KABCO]++;
-      } else {
-        stats.KABCO[d.KABCO] = 1;
-      }
       // Handle Manner of Collision, including invalid or missing data
       let collisionType =
         d.MannerofCollision && d.MannerofCollision.trim() !== ""
           ? d.MannerofCollision
           : "UNKNOWN"; // Assign "Unknown" if data is missing or invalid
-      if (collisionType in stats.MannerofCollision) {
-        stats.MannerofCollision[collisionType]++;
-      } else {
-        stats.MannerofCollision[collisionType] = 1;
+
+      if (!(collisionType in stats.MannerofCollision)) {
+        stats.MannerofCollision[collisionType] = 0;
+        stats.InjuryKilledStats[collisionType] = { injured: 0, killed: 0 };
       }
+
+      stats.MannerofCollision[collisionType]++;
+
       if (+d.NumberKilled) {
         stats.NumberKilled += +d.NumberKilled;
+        stats.InjuryKilledStats[collisionType].killed += +d.NumberKilled;
       }
+
       if (+d.NumberInjured) {
         stats.NumberInjured += +d.NumberInjured;
+        stats.InjuryKilledStats[collisionType].injured += +d.NumberInjured;
       }
     });
 
     console.log(stats);
 
-    // Take manner of collision data and add it to the crash statistics div
-    // manner of collision in the stats function is an array of arrays, which is hard to parse out
-    // need to separate the inner from the outer arrays
-    let mannerOfColStats = "";
-
-    const mannerSorted = {};
-    for (const [type, count] of Object.entries(stats.MannerofCollision).sort(
-      (a, b) => b[1] - a[1]
-    )) {
-      mannerOfColStats += `<strong>${type}</strong>: ${count.toLocaleString()}<br>`; // takes the collision type (angle, single vehicle, etc) and the count for each to a string
-      mannerSorted[type] = count;
-      // console.log(mannerSorted);
-    }
-
-    // define the data into HTML which we will place inside a defined div element
-    const crashData = `
-        <strong>Number Killed</strong>: ${stats.NumberKilled}<br>
-        <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br><br>
-        <strong>Manner of Collision</strong>:<br>
-    <ul>${mannerOfColStats}</ul>
-    `;
     // what is inside the stats div is now going to be equal to what we defined in crashData, taken from the crashStats fx
     // stats is defined in the CSS
-    document.querySelector("#stats .container").innerHTML = crashData;
-    // Need an array of the manner of collision data
-    d3Sorted = Object.entries(stats.MannerofCollision).sort((a, b) => b[1] - a[1]);
-    drawChart(stats, d3Sorted);
-  } // end crashStats
+    const crashData = `
+      <strong>Number Killed</strong>: ${stats.NumberKilled}<br>
+      <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br>
+    `;
+    // document.querySelector("#stats .container").innerHTML = crashData;
 
-  // function to draw chart
-  // This needs some more noodling to get the chart to display correctly
-  function drawChart(stats, mannerSorted) {
-    console.log(mannerSorted)
+    d3Sorted = Object.entries(stats.MannerofCollision).sort(
+      (a, b) => a[1] - b[1]
+    );
+
+    drawChart(stats, d3Sorted);
+    console.log(d3Sorted);
+  } // end crashStats function
+
+  // Function to draw stacked bar chart
+  function drawChart(stats, d3Sorted) {
+    console.log(d3Sorted);
     // select the HTML element that will hold our chart
     const barChart = d3.select("#bar-chart");
 
     // determine the width and height of chart from container
-    // const width = barChart.offsetWidth - 40;
-    const width = 380;
+    const width = 500;
+    const height = 425;
 
     // append a new SVG element to the container
     const svg = barChart
       .append("svg")
       .attr("width", width)
-      .attr("height", 380)
+      .attr("height", height);
 
     // x scale determines how wide each bar will be
     const x = d3
       .scaleLinear()
       .range([0, width])
-      .domain([0, d3.max(mannerSorted, (d) => d[1])]);
+      .domain([0, d3.max(d3Sorted, (d) => d[1])]); // returns the second value in the inner arrays, or our counts by each type
 
-    // y scale determines how tall each bar will be
     const y = d3
       .scaleBand()
-      .range([380, 0])
-      .domain(mannerSorted.map((d) => d[0]));
+      .range([height, 0])
+      .domain(d3Sorted.map((d) => d[0]))
+      .padding(0.1); // spreads each bar from one another
 
-    color = d3
-      .scaleOrdinal(d3.schemeTableau10)
-      .domain(mannerSorted.map((d) => d[0]));
+    const color = d3
+      .scaleOrdinal(d3.schemeCategory10)
+      .domain(d3Sorted.map((d) => d[0]));
 
-    // append a new SVG group to the SVG element
     svg
-      .append("g")
-      .selectAll("rect")
-      .data(mannerSorted)
+      .selectAll("rect.total-bar")
+      .data(d3Sorted)
       .enter()
       .append("rect")
-      .attr("class", "bar")
+      .attr("class", "bar total-bar")
       .attr("y", (d) => y(d[0]))
       .attr("height", y.bandwidth())
       .attr("x", 0)
-      .attr("width", 100) // (d) => x(d[1])
-      .attr("fill", (d) => color(d[0]));
+      .attr("width", (d) => x(d[1]))
+      .attr("fill", (d) => color(d[0]))
+      .attr("stroke", "#000000")
+      .attr("stroke-width", "0.75")
+      .on("mouseover", (event, d) => {
+        const injuryKilledStats = stats.InjuryKilledStats[d[0]];
+        let tooltipContent = `
+        ${d[0]}<br>
+        <strong>${d[1].toLocaleString()}</strong> crashes<br>
+        <strong>${injuryKilledStats.injured.toLocaleString()}</strong> injured<br>
+        <strong>${injuryKilledStats.killed.toLocaleString()}</strong> killed
+      `;
+        tooltip
+          .style("opacity", 1)
+          .style("left", event.pageX + 30 + "px")
+          .style("top", event.pageY - 30 + "px")
+          .style("position", "absolute")
+          .style("padding", "5px")
+          .style("box-shadow", "0 0 15px rgba(0, 0, 0, 0.32)")
+          .html(tooltipContent);
+      })
+      .on("mouseout", () => {
+        tooltip.style("opacity", 0);
+      });
+
+    // Add second stacked bars for injured
+    svg
+      .selectAll("rect.injury-bar")
+      .data(d3Sorted)
+      .enter()
+      .append("rect")
+      .attr("class", "bar injury-bar")
+      .attr("y", (d) => y(d[0]))
+      .attr("height", y.bandwidth())
+      .attr("x", 0)
+      .attr("width", (d) =>
+        x(
+          stats.InjuryKilledStats[d[0]].injured +
+            stats.InjuryKilledStats[d[0]].killed
+        )
+      )
+      .attr("fill", "#c5c7c6")
+      .attr("opacity", 1)
+      .attr("stroke", "#000000")
+      .attr("stroke-width", "0.75")
+      .on("mouseover", (event, d) => {
+        const injuryKilledStats = stats.InjuryKilledStats[d[0]];
+        let tooltipContent = `
+        Number Injured/Killed<br>
+        <strong>${injuryKilledStats.injured}</strong> injured<br>
+        <strong>${injuryKilledStats.killed}</strong> killed<br>
+      `;
+        tooltip
+          .style("opacity", 1)
+          .style("left", event.pageX + 30 + "px")
+          .style("top", event.pageY - 30 + "px")
+          .style("position", "absolute")
+          .style("padding", "5px")
+          .style("box-shadow", "0 0 15px rgba(0, 0, 0, 0.32)")
+          .html(tooltipContent);
+      })
+      .on("mouseout", () => {
+        tooltip.style("opacity", 0);
+      });
+
+    // text shadow
+    svg
+      .append("defs")
+      .append("filter")
+      .attr("id", "text-shadow")
+      .append("feDropShadow")
+      .attr("dx", 2) // Horizontal shadow offset
+      .attr("dy", 2) // Vertical shadow offset
+      .attr("stdDeviation", 2) // Shadow blur amount
+      .attr("flood-color", "black") // Shadow color
+      .attr("flood-opacity", 0.6); // Shadow opacity
+
+    // Label each bar
+    svg
+      .selectAll("text.label")
+      .data(d3Sorted)
+      .enter()
+      .append("text")
+      .text((d) => `${d[0]}`) // Set the text of each label
+      .attr("x", (d) => {
+        // set the x position of each label
+        if (x(d[1]) / width < 0.5) {
+          return x(d[1]) + 5;
+        } else {
+          return 5;
+        }
+      })
+      .attr("y", (d) => y(d[0]) + y.bandwidth() / 1.75)
+      .attr("text-anchor", "left")
+      .attr("fill", "whitesmoke")
+      .attr("filter", "url(#text-shadow)");
   }
 })();
