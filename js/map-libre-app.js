@@ -7,8 +7,6 @@
   const statsWindow = document.querySelector("#stats");
   const statsButton = document.querySelector("#stats-button");
 
-  let chartDrawn = false;
-
   statsButton.addEventListener("click", function () {
     if (
       statsWindow.style.display === "none" ||
@@ -334,7 +332,6 @@
     // Loop through the checkboxes and add an event listener to each
     legendBoxes.forEach(function (input) {
       // When the checkbox is changed, update the map
-      if (input.id === "density-toggle") return;
       input.addEventListener("change", function (e) {
         // Loop through the kabcoVals array and update the checked property
         kabcoVals.forEach(function (item) {
@@ -352,7 +349,7 @@
         });
 
         // Apply the combined filter with current time range
-        const currentTimeValue = parseInt(timeSlider.value, 10);
+        const currentTimeValue = parseInt(timeSlider.value);
         const timeRange =
           currentTimeValue === 0
             ? null
