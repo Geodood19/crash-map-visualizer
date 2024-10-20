@@ -47,6 +47,40 @@
     button.style.top = h1.offsetHeight + 20 + "px";
   }
 
+  // Load data from remote source using D3 and async/await
+  async function fetchData() {
+    const csv = await d3.csv("data/Fayette_2023Crashes_KABCO.csv");
+    const sidecar = await d3.csv("data/factors.csv");
+    const counties = await d3.json("data/Ky_County_Polygons.geojson");
+    const tracts = await d3.json("data/DOT_Disadv_CensusTract_Fayette.geojson");
+
+    const data = csv.filter(
+      (row) => !row.DirAnalysisCode.includes("PARKING LOT")
+    );
+
+    // Update MannerofCollision to 'UNKNOWN' if it is null or blank
+    data.forEach((row) => {
+      if (!row.MannerofCollision || row.MannerofCollision.trim() === "") {
+        row.MannerofCollision = "UNKNOWN";
+      }
+    });
+
+    // Filter counties to only include the Fayette County
+    const fayette = {
+      type: "FeatureCollection",
+      features: counties.features.filter(
+        (feature) => feature.properties.NAME === "FAYETTE"
+      ),
+    };
+    // console.log(data, sidecar, counties);
+    // console.log(fayette);
+    console.log(tracts);
+    createGeoJson(data, sidecar, fayette, tracts);
+  }
+
+  // have a filter variable defined and be editable
+  let filter = null;
+
   // Create global div for the tooltip and hide with opacity
   const tooltip = d3
     .select("body")
@@ -72,18 +106,110 @@
       "https://api.maptiler.com/maps/0196b0e2-ea56-44ac-bf94-c9fb230df9ad/style.json?key=VR7FKTd6lXA4PKRQVzfY", // style URL
     center: [-84.475, 38.02], // starting position [lng, lat]
     zoom: 10.2, // starting zoom
+    minZoom: 10, // the maximum level users can zoom out
   });
 
   // Add zoom and rotation controls to the map.
   map.addControl(new maplibregl.NavigationControl());
 
-  // Load data from remote source using D3 and async/await
-  async function fetchData() {
-    const data = await d3.csv("data/Fayette_2023Crashes_KABCO.csv");
-    const sidecar = await d3.csv("data/factors.csv");
-    console.log(data, sidecar);
-    createGeoJson(data, sidecar);
+  // Define time groups for the slider
+  const timeGroups = [
+    { label: "12:00 AM - 2:59 AM", range: [0, 259] },
+    { label: "3:00 AM - 5:59 AM", range: [300, 559] },
+    { label: "6:00 AM - 8:59 AM", range: [600, 859] },
+    { label: "9:00 AM - 11:59 AM", range: [900, 1159] },
+    { label: "12:00 PM - 2:59 PM", range: [1200, 1459] },
+    { label: "3:00 PM - 5:59 PM", range: [1500, 1759] },
+    { label: "6:00 PM - 8:59 PM", range: [1800, 2059] },
+    { label: "9:00 PM - 11:59 PM", range: [2100, 2359] },
+  ];
+
+  // add breakdown for colorizing KABCO values
+  // id will be used to match the value in KABCO with the id property in the kabcoVals object
+  // Add prop for checked to determine if the KABCO value is visible
+  const kabcoVals = [
+    {
+      id: "1",
+      text: "Fatal Crash",
+      color: "#FF0000",
+      size: 8,
+      checked: true,
+    },
+    {
+      id: "2",
+      text: "Serious Injury Crash",
+      color: "#ff7b00",
+      size: 6,
+      checked: true,
+    },
+    {
+      id: "3",
+      text: "Minor Injury Crash",
+      color: "#f5ee22",
+      size: 5,
+      checked: true,
+    },
+    {
+      id: "4",
+      text: "Possible Injury Crash",
+      color: "#05fa3a",
+      size: 4,
+      checked: true,
+    },
+    {
+      id: "5",
+      text: "Property Damage Only",
+      color: "#1953ff",
+      size: 3,
+      checked: true,
+    },
+  ];
+
+  // Set max value of slider based on the number of time groups
+  const timeSlider = document.querySelector(".time-slider");
+  timeSlider.setAttribute("max", timeGroups.length);
+
+  // Function to filter crashes based on time
+  function filterBy(timeRange) {
+    let filters = [];
+
+    // Add time filter if a time range is provided
+    if (timeRange) {
+      filters.push([
+        "all",
+        [">=", ["to-number", ["get", "Time"]], timeRange[0]],
+        ["<=", ["to-number", ["get", "Time"]], timeRange[1]],
+      ]);
+    }
+
+    // Gather selected KABCO categories based on checked properties
+    const categories = kabcoVals
+      .filter((item) => item.checked) // Keep only checked items
+      .map((item) => item.id); // Get their ids
+
+    // Add KABCO filter based on selected categories
+    if (categories.length > 0) {
+      filters.push(["in", ["get", "KABCO"], ["literal", categories]]);
+    }
+    // Combine filters: show crashes if any filter matches
+    const combinedFilter = filters.length > 0 ? ["all", ...filters] : null;
+
+    // Set the filters on the map layers
+    map.setFilter("crashes", combinedFilter);
+    map.setFilter("heatLayer", combinedFilter);
   }
+
+  // Slider input event listener
+  timeSlider.addEventListener("input", (e) => {
+    const value = parseInt(e.target.value, 10);
+    const timeRange = value === 0 ? null : timeGroups[value - 1].range;
+    // Update the DIV element with the current time group label
+    const sliderLabel = document.getElementById("slider-label");
+    sliderLabel.textContent =
+      value === 0 ? "All Crashes" : `${timeGroups[value - 1].label}`;
+
+    filterBy(timeRange); // filterBy is invoked and passes timeRange for use
+  });
 
   fetchData(); // invokes the fetchData function
   // console.log(data);
@@ -96,31 +222,54 @@
     );
   }
 
-  // function getTimeGroup(data) {
-  //   const timeGroup = parseInt(data.CollisionTime);
+  // Function to calculate crash statistics
+  function crashStats(data) {
+    const stats = {
+      Sum: 0,
+      MannerofCollision: {},
+      InjuryKilledStats: {},
+      NumberKilled: 0,
+      NumberInjured: 0,
+    };
 
-  //   if (timeGroup >= 0 && timeGroup <= 299) {
-  //     return "0000 - 0299";
-  //   } else if (timeGroup >= 300 && timeGroup <= 599) {
-  //     return "0300 - 0599";
-  //   } else if (timeGroup >= 600 && timeGroup <= 899) {
-  //     return "0600 - 0899";
-  //   } else if (timeGroup >= 900 && timeGroup <= 1199) {
-  //     return "0900 - 1199";
-  //   } else if (timeGroup >= 1200 && timeGroup <= 1499) {
-  //     return "1200 - 1499";
-  //   } else if (timeGroup >= 1500 && timeGroup <= 1799) {
-  //     return "1500 - 1799";
-  //   } else if (timeGroup >= 1800 && timeGroup <= 2099) {
-  //     return "1800 - 2099";
-  //   } else if (timeGroup >= 2100 && timeGroup <= 2399) {
-  //     return "2100 - 2399";
-  //   }
+    data.forEach(function (d) {
+      // Handle Manner of Collision, including invalid or missing data
+      let collisionType =
+        d.MannerofCollision && d.MannerofCollision.trim() !== ""
+          ? d.MannerofCollision
+          : "UNKNOWN"; // Assign "Unknown" if data is missing or invalid
 
-  //   return "ALL"; // Default for showing all crashes if no time matches
-  // }
+      if (!(collisionType in stats.MannerofCollision)) {
+        stats.MannerofCollision[collisionType] = 0;
+        stats.InjuryKilledStats[collisionType] = { injured: 0, killed: 0 };
+      }
 
-  function createGeoJson(data, sidecar) {
+      stats.MannerofCollision[collisionType]++;
+
+      if (+d.NumberKilled) {
+        stats.NumberKilled += +d.NumberKilled;
+        stats.InjuryKilledStats[collisionType].killed += +d.NumberKilled;
+      }
+
+      if (+d.NumberInjured) {
+        stats.NumberInjured += +d.NumberInjured;
+        stats.InjuryKilledStats[collisionType].injured += +d.NumberInjured;
+      }
+      stats.Sum++;
+    });
+
+    console.log(stats);
+
+    d3Sorted = Object.entries(stats.MannerofCollision).sort(
+      (a, b) => a[1] - b[1]
+    );
+
+    drawChart(stats, d3Sorted);
+
+    console.log(d3Sorted);
+  } // end crashStats function
+
+  function createGeoJson(data, sidecar, fayette, tracts) {
     const geojson = {
       type: "FeatureCollection",
       // map method returns a new array from the data array
@@ -169,52 +318,6 @@
     // check the geojson
     console.log(geojson);
 
-    // need to add the ability to define KABCO colors
-    // access KABCO values in the data array
-    const KABCO = data.map((d) => d.KABCO);
-    // console.log(KABCO); // This will log an array of KABCO values
-
-    // add breakdown for colorizing KABCO values
-    // id will be used to match the value in KABCO with the id property in the kabcoVals object
-    // Add prop for checked to determine if the KABCO value is visible
-    const kabcoVals = [
-      {
-        id: "1",
-        text: "Fatal Crash",
-        color: "#FF0000",
-        size: "10",
-        checked: true,
-      },
-      {
-        id: "2",
-        text: "Serious Injury Crash",
-        color: "#ff7b00",
-        size: "8",
-        checked: true,
-      },
-      {
-        id: "3",
-        text: "Minor Injury Crash",
-        color: "#f5ee22",
-        size: "6",
-        checked: true,
-      },
-      {
-        id: "4",
-        text: "Possible Injury Crash",
-        color: "#05fa3a",
-        size: "4",
-        checked: true,
-      },
-      {
-        id: "5",
-        text: "Property Damage Only",
-        color: "#1953ff",
-        size: "2.5",
-        checked: true,
-      },
-    ];
-
     // Build the legend from CSS and the kabcoVals array
     const legend = document.getElementById("legend");
     kabcoVals.forEach(function (item) {
@@ -231,6 +334,7 @@
     // Loop through the checkboxes and add an event listener to each
     legendBoxes.forEach(function (input) {
       // When the checkbox is changed, update the map
+      if (input.id === "density-toggle") return;
       input.addEventListener("change", function (e) {
         // Loop through the kabcoVals array and update the checked property
         kabcoVals.forEach(function (item) {
@@ -246,6 +350,15 @@
             categories.push(item.id);
           }
         });
+
+        // Apply the combined filter with current time range
+        const currentTimeValue = parseInt(timeSlider.value, 10);
+        const timeRange =
+          currentTimeValue === 0
+            ? null
+            : timeGroups[currentTimeValue - 1].range;
+
+        filterBy(timeRange);
         // Use the filter expression and setFilter method to filter the data
         const filter = [
           "in", // Filter the data to only include the KABCO values in the array
@@ -260,11 +373,74 @@
     // Add the data to the map after loading
     map.on("load", function () {
       // add source first
+      map.addSource("tracts", {
+        type: "geojson",
+        data: tracts,
+      });
+      // then add the layer
+      map.addLayer({
+        id: "disadv-tracts-fill",
+        type: "fill",
+        source: "tracts",
+        filter: [
+          "in",
+          ["get", "Disadvantaged Communities Indicator"],
+          ["literal", "1"],
+        ],
+        paint: {
+          "fill-color": "#FF00FF",
+          "fill-opacity": 0.3,
+        },
+      });
+
+      // then add the layer
+      map.addLayer({
+        id: "disadv-tracts-line",
+        type: "line",
+        source: "tracts",
+        filter: [
+          "in",
+          ["get", "Disadvantaged Communities Indicator"],
+          ["literal", "1"],
+        ],
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": "#FF00FF",
+          "line-width": 2,
+          "line-opacity": 0.5,
+        },
+      });
+
+      // add counties
+      map.addSource("fayette", {
+        type: "geojson",
+        data: fayette,
+      });
+      // then add the layer
+      map.addLayer({
+        id: "fayette-county",
+        type: "line",
+        source: "fayette",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": "#666",
+          "line-width": 4,
+        },
+      });
+
+      // add source first
+      // add crashes
       map.addSource("crashes", {
         type: "geojson",
         data: geojson,
       });
-      // add layer
+      // then add the layer
       map.addLayer({
         id: "crashes",
         type: "circle",
@@ -275,7 +451,7 @@
           ["literal", ["1", "2", "3", "4", "5"]], // The values to include
         ],
         paint: {
-          "circle-radius": 5,
+          "circle-radius": createCircleRadius(kabcoVals),
           // color circles by KABCO values
           // style expressions, check maplibre documentation: https://maplibre.org/maplibre-style-spec/expressions/
           "circle-color": createFillColor(kabcoVals),
@@ -314,6 +490,12 @@
             1,
             "rgb(178,24,43)",
           ],
+          // the following section controls how the data is weighted for the heat layer
+          // below takes the KABCO, converts it to a number from a string (to-number)
+          // then weighs the KABCO values as below:
+          // ********** / (6 - [KABCO VALUE]) / 5 **********
+          // So KABCO values of 1 have a weight of 1, and KABCO values of 5 have a weight of 0.2
+          "heatmap-weight": ["/", ["-", 6, ["to-number", ["get", "KABCO"]]], 5],
           // Adjust the heatmap radius by zoom level
           "heatmap-radius": [
             "interpolate",
@@ -336,6 +518,8 @@
           ],
         },
       });
+
+      filterBy(null);
 
       // Add a popup to the map
       map.on("click", "crashes", function (e) {
@@ -362,25 +546,6 @@
       map.on("mouseleave", "crashes", function () {
         map.getCanvas().style.cursor = "";
       });
-
-      filterBy(geojson); // not passing any data?
-
-      // function filterBy(geojson) {
-      //   const filters = ["==", "CollisionTime", geojson.features[0].properties];
-      //   map.setFilter("crashes", filters);
-      //   map.setFilter("heatLayer", filters);
-
-      //   // set the label to the time group
-      //   document.getElementById("CollisionTime").textContent =
-      //     data.CollisionTime;
-      // }
-
-      // document
-      //   .getElementById("slider-controls")
-      //   .addEventListener("input", (e) => {
-      //     const time = parseInt(e.target.value, 10);
-      //     filterBy(time);
-      //   });
     }); // end map.on function to add crashes
 
     // using the array of KABCO and kabcoVals, create a createFillColor function to determine color to paint the crashes
@@ -391,69 +556,84 @@
         agg.push(item.color);
         return agg;
       }, []);
-      console.log(
-        `["match", ["literal", ["get", 'KABCO']], ${colors}, "#CCC"]`
-      );
+      // console.log(
+      //   `["match", ["literal", ["get", 'KABCO']], ${colors}, "#CCC"]`);
+
       // Style expressions are tricky. They use strings and arrays to create a style.
       // This is a match expression that uses KABCO value to determine the color of the circle.
       // KABCO is not a variable in this case.
-      return ["match", ["get", "KABCO"], ...colors, "#CCC"];
+      return ["match", ["get", "KABCO"], ...colors, "#CCC"]; // default color is #CCC
+    }
+
+    // use kabcoVals sizes to return customized sizes for the crashes based on KABCO vals
+    function createCircleRadius(kabcoVals) {
+      const sizes = kabcoVals.reduce((agg, item) => {
+        agg.push(item.id);
+        agg.push(item.size);
+        return agg;
+      }, []);
+      return ["match", ["get", "KABCO"], ...sizes, 5]; // Default size is 5
     }
 
     crashStats(data);
   } // end createGeoJson
 
-  // Function to calculate crash statistics
-  function crashStats(data) {
-    const stats = {
-      MannerofCollision: {},
-      InjuryKilledStats: {},
-      NumberKilled: 0,
-      NumberInjured: 0,
-    };
-
-    data.forEach(function (d) {
-      // Handle Manner of Collision, including invalid or missing data
-      let collisionType =
-        d.MannerofCollision && d.MannerofCollision.trim() !== ""
-          ? d.MannerofCollision
-          : "UNKNOWN"; // Assign "Unknown" if data is missing or invalid
-
-      if (!(collisionType in stats.MannerofCollision)) {
-        stats.MannerofCollision[collisionType] = 0;
-        stats.InjuryKilledStats[collisionType] = { injured: 0, killed: 0 };
+  // functionality to add filtering/highlighting in createBar function
+  function updateCrashes(geojson) {
+    // if the layer is crashes
+    if (map.getLayer("crashes")) {
+      // set the paint properties defined below
+      map.setPaintProperty("crashes", "circle-opacity", [
+        // the below logic matches the case in teh geojson for the crashes layer where
+        // the MannerofCollision values that are queried via any event are styled appropriately
+        "case",
+        ["==", ["get", "MannerofCollision"], geojson],
+        1, // anything that equals the value queried has the opacity set to 1
+        0, // anything that does not equal the value queried has the opacity set to 0 (completely transparent)
+      ]);
+      map.setPaintProperty("crashes", "circle-stroke-width", [
+        "case",
+        ["==", ["get", "MannerofCollision"], geojson],
+        0.75,
+        0,
+      ]);
+    }
+    // also turn off the heat layer so taht only the crash points are shown
+    // if it is the heatLayer...
+    if (map.getLayer("heatLayer")) {
+      // if it is not filtered
+      if (!filter) {
+        filter = map.getFilter("heatLayer");
       }
 
-      stats.MannerofCollision[collisionType]++;
+      // Create a filter for MannerofCollision
+      const mannerFilter = ["==", ["get", "MannerofCollision"], geojson];
 
-      if (+d.NumberKilled) {
-        stats.NumberKilled += +d.NumberKilled;
-        stats.InjuryKilledStats[collisionType].killed += +d.NumberKilled;
+      // Combine with the original filter
+      let combinedFilter;
+      if (filter) {
+        combinedFilter = ["all", filter, mannerFilter];
+      } else {
+        combinedFilter = mannerFilter;
       }
 
-      if (+d.NumberInjured) {
-        stats.NumberInjured += +d.NumberInjured;
-        stats.InjuryKilledStats[collisionType].injured += +d.NumberInjured;
-      }
-    });
+      map.setFilter("heatLayer", combinedFilter);
+    }
+  }
+  function resetCrashes(geojson) {
+    // resets to defaults
+    if (map.getLayer("crashes")) {
+      map.setPaintProperty("crashes", "circle-opacity", 0.75);
+      map.setPaintProperty("crashes", "circle-stroke-width", 0.75);
+    }
 
-    console.log(stats);
-
-    // what is inside the stats div is now going to be equal to what we defined in crashData, taken from the crashStats fx
-    // stats is defined in the CSS
-    const crashData = `
-      <strong>Number Killed</strong>: ${stats.NumberKilled}<br>
-      <strong>Number Injured</strong>: ${stats.NumberInjured.toLocaleString()}<br>
-    `;
-    // document.querySelector("#stats .container").innerHTML = crashData;
-
-    d3Sorted = Object.entries(stats.MannerofCollision).sort(
-      (a, b) => a[1] - b[1]
-    );
-
-    drawChart(stats, d3Sorted);
-    console.log(d3Sorted);
-  } // end crashStats function
+    if (map.getLayer("heatLayer")) {
+      // Restore the original filter
+      map.setFilter("heatLayer", filter || null);
+      // Reset the original filter variable
+      filter = null;
+    }
+  }
 
   // Function to draw stacked bar chart
   function drawChart(stats, d3Sorted) {
@@ -500,7 +680,9 @@
       .attr("fill", (d) => color(d[0]))
       .attr("stroke", "#000000")
       .attr("stroke-width", "0.75")
+      .attr("transform", "translate(0 , 0)")
       .on("mouseover", (event, d) => {
+        updateCrashes(d[0]);
         const injuryKilledStats = stats.InjuryKilledStats[d[0]];
         let tooltipContent = `
         ${d[0]}<br>
@@ -518,6 +700,7 @@
           .html(tooltipContent);
       })
       .on("mouseout", () => {
+        resetCrashes();
         tooltip.style("opacity", 0);
       });
 

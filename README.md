@@ -10,20 +10,27 @@
 
 ## Project Description
 
-The final project I am going to propose for MAP673 is going to be a comprehensive digital map showcasing crashes. While ultimately, I would like to have more of a focus on user input where they prompt the map to be created by importing their own crash data, I will have to settle on something that is loaded via a CSV form the repository. A big goal is to have something generated that can be duplicated across multiple projects - change which CSV the JS is pointing to, and viola! The crash data should still display. 
+This was a final project developed for MAP673: Design for Interactive Web Mapping. The data was sourced from [CrashInformationKY.org](https://crashinformationky.org/AdvancedSearch) for individual months of 2023 in Fayette County, Kentucky. The intent was to develop a way to interactively view crashes in multiple ways: crash density, crash fatalities (via KABCO classification), and the manner of collision. Crash records also have a temporal aspect to it (the time of each incident is recorded) and crashes can be filtered by time of day. This allows for a dynamic and comprehensive understanding to see spatial and temporal distribution of crashes in a variety of ways. 
 
-I want to have a crash data visualizer that is both aesthetic but also informative in a multitude of ways. A need that I have identified in my company is to move away from static maps and into digital maps for visualizing crashes. Project Managers specifically want to view all crashes within a specific time-frame and within specific mile point measurements in three ways: manner of collision, crash fatalities/injuries, and crash density via a classic heat map. But there is the classic restriction static maps have is that there is zero additional information afforded by showing this data, which has a host of valuable information associated with it. What crashes exist in the data where a pedestrian was struck? What about any hit-and-run crash incidents? What manner of collisions resulted in a serious or fatal injury? Typically, a CSV/Excel spreadsheet is submitted with all static crash maps, and Project Managers can visualize the text information that way, but it would be *much* more valuable to have a way for project managers to view crashes interactively in a map. 
+The ultimate goal for this visualization is to develop things in such a way that a user can upload a prepared geojson or a CSV and that data be dynamically added to the map for project engineers to visualize their own data for analysis. However, given that this is a beta version to understand the capabilities and extent of what can be done, crash data is pre-loaded and initialized in this map. 
+
+To view this crash data, please visit this URL: [crash-map-visualizer](https://geodood19.github.io/crash-map-visualizer/).
 
 ## Map Description
 
-The map will be a simple dot map, but with the ability to be toggled/viewed in multiple ways - crash density, manner of collision, KABCO (crash severity classification), pedestrian/bicycle crashes, fatal crashes *only*, hit-and-run, and more. Upon startup, the map should load, snap to the view extent of the data, and show each crash record, in a black/charcoal-gray dot with a very thin white stroke, and a transparent heat layer, which shows teh crash density that dynamically updates the "heat" when the user zooms in/out. A dropdown that shows different ways of visualizing the crash data will be on the map, with a prompt to encourage the user to click and update the map with different attributes. For each view, the total counts of each type in any attribute will be shown (total fatal crashes, total angle crashes, total pedestrian crashes, etc.). The base map will be a dark, monochromatic base layer so that the focus is entirely on the data and map elements (user interactive elements). 
+The crash data was initially manipulated using Microsoft Excel, and the map elements are generated via the D3 and MapLibre JavaScript libraries. The map is a simple dot map, but with the ability to be toggled/viewed in multiple ways. The map shows crashes on the KABCO property (which was pre-calculated in Excel through the multiple tabs/spreadsheets in the aforementioned data source) initially and is overlain by crash density (heat map). The crash density layer intensity is weighed by the crash severity (greater crash severity skews the density towards those attributes). A chart is drawn via D3 and can be opened/closed in a "Crash Statistics" button. When the user hovers over any indiviual bar in the chart, the data is filtered dynamically in the map to highlight those manner of collisions. Alternatively, a combined use of the time slider and the crash severity checkbox can give the user a better understanding of crash data in multiple ways. 
+
+For the use in transportation planning, crashes inside of parking lots/parking structures were filtered from this analysis/visualization. 
+
+While it is generated and displayed, disadvantaged communities (in magenta polygons) in Fayette County (categorized via the [Justice40 initiative](https://screeningtool.geoplatform.gov/en/#3.56/31.3/-95.16)) typically experience more crashes than non-disadvantaged communities. Eventually this map will be updated with a choropleth layer on all the census tracts for Fayette County, where crash totals in each census tract will be normalized to the total number of crashes displayed in this crash map visualizer. 
 
 ## Data Sources and Technology Stack
 
 - Crash data will be sourced from [CrashInformationKY.org](https://crashinformationky.org/AdvancedSearch)
+- Census Tract with climate and economic justice screening data was sourced from [Justice40 initiative](https://screeningtool.geoplatform.gov/en/#3.56/31.3/-95.16)
 - Technology used:
     - Python via ArcGIS Pro (using integrated ArcGIS Notebooks) to calculate data about KABCO from multiple spreadsheets and then convert it to a CSV
-    - Data will be accessed in a CSV only - no need for a GeoJSON 
+    - Data will be accessed in a CSV
     - JS Libraries include MapLibre and D3. 
     - Will also be developing a web page using HTML with common styles in CSS, and eventually integrating the CSS styles in a common format.
     - Hosting platform will initially be on GitHub, but could eventually be moved to its own web page with a custom URL. 

@@ -172,7 +172,7 @@ h2:active {
   margin-right: 10px;
 }
 
-/* .legend .bar {
+.legend .bar {
     display: inline-block;
     height: 12 px;
     width: 100%;
@@ -184,8 +184,8 @@ h2:active {
      rgb(253,219,199) 75%, 
      rgb(239,138,98) 90%,
      rgb(178,24,43) 100%
-     )
-  } */
+     );
+  }
 
 /* Small devices (portrait phones, 576px and below) */
 @media (max-width: 576px) and (orientation: portrait) {
