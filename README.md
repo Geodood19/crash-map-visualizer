@@ -30,7 +30,6 @@ While it is generated and displayed, disadvantaged communities (in magenta polyg
 - Census Tract with climate and economic justice screening data was sourced from [Justice40 initiative](https://screeningtool.geoplatform.gov/en/#3.56/31.3/-95.16)
 - Technology used:
     - Python via ArcGIS Pro (using integrated ArcGIS Notebooks) to calculate data about KABCO from multiple spreadsheets and then convert it to a CSV
+    - GeoJSON of the Justice40 Census Tracts generated via QGIS after making a spatial join of crash totals per tract
     - Data will be accessed in a CSV
     - JS Libraries include MapLibre and D3. 
-    - Will also be developing a web page using HTML with common styles in CSS, and eventually integrating the CSS styles in a common format.
-    - Hosting platform will initially be on GitHub, but could eventually be moved to its own web page with a custom URL. 
