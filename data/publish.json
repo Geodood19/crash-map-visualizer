@@ -1,6 +1,6 @@
 {
     "title": "Crash Map Visualizer",
-    "info": "A beginning interactive map to assist transportation engineers for safety initiatives for Fayette County's 2023 crashes record.",
+    "info": "A beginning interactive map to assist transportation engineers for safety initiatives using Fayette County's 2023 crashes record.",
     "coordinates": [-84.475, 38.02],
     "author": "James FL Thompson",
     "link": "https://geodood19.github.io/crash-map-visualizer/"
