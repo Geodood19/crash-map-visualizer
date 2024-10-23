@@ -22,8 +22,6 @@ The crash data was initially manipulated using Microsoft Excel, and the map elem
 
 For the use in transportation planning, crashes inside of parking lots/parking structures were filtered from this analysis/visualization. 
 
-While it is generated and displayed, disadvantaged communities (in magenta polygons) in Fayette County (categorized via the [Justice40 initiative](https://screeningtool.geoplatform.gov/en/#3.56/31.3/-95.16)) typically experience more crashes than non-disadvantaged communities. Eventually this map will be updated with a choropleth layer on all the census tracts for Fayette County, where crash totals in each census tract will be normalized to the total number of crashes displayed in this crash map visualizer. 
-
 ## Data Sources and Technology Stack
 
 - Crash data will be sourced from [CrashInformationKY.org](https://crashinformationky.org/AdvancedSearch)

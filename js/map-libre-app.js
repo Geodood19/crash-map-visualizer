@@ -6,6 +6,17 @@
   const h3 = document.querySelector("h3");
   const statsWindow = document.querySelector("#stats");
   const statsButton = document.querySelector("#stats-button");
+  const spinner = document.querySelector(".spinner-container");
+
+  // Function to show the spinner
+  function showSpinner() {
+    spinner.style.display = "flex"; // Show the spinner
+  }
+
+  // Function to hide the spinner
+  function hideSpinner() {
+    spinner.style.display = "none"; // Hide the spinner
+  }
 
   statsButton.addEventListener("click", function () {
     if (
@@ -47,6 +58,8 @@
 
   // Load data from remote source using D3 and async/await
   async function fetchData() {
+    // show the spinner while the data loads
+    showSpinner();
     const csv = await d3.csv("data/Fayette_2023Crashes_KABCO.csv");
     const sidecar = await d3.csv("data/factors.csv");
     const counties = await d3.json("data/Ky_County_Polygons.geojson");
@@ -74,6 +87,9 @@
     // console.log(fayette);
     console.log(tracts);
     createGeoJson(data, sidecar, fayette, tracts);
+
+    // hide the spinner when the data finally loads!
+    hideSpinner();
   }
 
   // have a filter variable defined and be editable
@@ -101,10 +117,10 @@
     // emoji: dynamite!
     // this is the style that you'll want to replace with your own
     style:
-      "https://api.maptiler.com/maps/0196b0e2-ea56-44ac-bf94-c9fb230df9ad/style.json?key=VR7FKTd6lXA4PKRQVzfY", // style URL
+      "https://api.maptiler.com/maps/933ba1d3-2d03-46b6-8ed9-9eb848c5b585/style.json?key=VR7FKTd6lXA4PKRQVzfY", // style URL
     center: [-84.475, 38.02], // starting position [lng, lat]
-    zoom: 10.2, // starting zoom
-    minZoom: 10, // the maximum level users can zoom out
+    zoom: 10.32, // starting zoom
+    minZoom: 8, // the maximum level users can zoom out
   });
 
   // Add zoom and rotation controls to the map.
@@ -129,36 +145,36 @@
     {
       id: "1",
       text: "Fatal Crash",
-      color: "#FF0000",
-      size: 8,
+      color: "#330601",
+      size: 12,
       checked: true,
     },
     {
       id: "2",
       text: "Serious Injury Crash",
-      color: "#ff7b00",
-      size: 6,
+      color: "#8c1001",
+      size: 10,
       checked: true,
     },
     {
       id: "3",
       text: "Minor Injury Crash",
-      color: "#f5ee22",
-      size: 5,
+      color: "#fc1d03",
+      size: 7.5,
       checked: true,
     },
     {
       id: "4",
       text: "Possible Injury Crash",
-      color: "#05fa3a",
-      size: 4,
+      color: "#fc9083",
+      size: 6,
       checked: true,
     },
     {
       id: "5",
       text: "Property Damage Only",
-      color: "#1953ff",
-      size: 3,
+      color: "#fae1de",
+      size: 4,
       checked: true,
     },
   ];
@@ -370,47 +386,6 @@
     // Add the data to the map after loading
     map.on("load", function () {
       // add source first
-      map.addSource("tracts", {
-        type: "geojson",
-        data: tracts,
-      });
-      // then add the layer
-      map.addLayer({
-        id: "disadv-tracts-fill",
-        type: "fill",
-        source: "tracts",
-        filter: [
-          "in",
-          ["get", "Disadvantaged Communities Indicator"],
-          ["literal", "1"],
-        ],
-        paint: {
-          "fill-color": "#FF00FF",
-          "fill-opacity": 0.3,
-        },
-      });
-
-      // then add the layer
-      map.addLayer({
-        id: "disadv-tracts-line",
-        type: "line",
-        source: "tracts",
-        filter: [
-          "in",
-          ["get", "Disadvantaged Communities Indicator"],
-          ["literal", "1"],
-        ],
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#FF00FF",
-          "line-width": 2,
-          "line-opacity": 0.5,
-        },
-      });
-
       // add counties
       map.addSource("fayette", {
         type: "geojson",
@@ -452,8 +427,24 @@
           // color circles by KABCO values
           // style expressions, check maplibre documentation: https://maplibre.org/maplibre-style-spec/expressions/
           "circle-color": createFillColor(kabcoVals),
-          "circle-opacity": 0.75,
-          "circle-stroke-width": 0.75,
+          "circle-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            10.5,
+            0.1,
+            12,
+            1,
+          ],
+          "circle-stroke-width": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            10.5,
+            0.1,
+            12,
+            0.5,
+          ],
           "circle-stroke-color": "#222",
         },
       });
@@ -508,9 +499,9 @@
             "interpolate",
             ["linear"],
             ["zoom"],
-            10, // the most zoomed out zoom level will have...
-            0.75, // ...a 75% opacity on the heat layer (25% transparency), which will smoothly transition to...
-            14, // ...zoom level 14, which will have an opacity of....
+            11, // the most zoomed out zoom level will have...
+            0.8, // ...a 8% opacity on the heat layer (20% transparency), which will smoothly transition to...
+            13, // ...zoom level 14, which will have an opacity of....
             0, // 0%, or 100% transparent
           ],
         },
@@ -586,13 +577,19 @@
         "case",
         ["==", ["get", "MannerofCollision"], geojson],
         1, // anything that equals the value queried has the opacity set to 1
-        0, // anything that does not equal the value queried has the opacity set to 0 (completely transparent)
+        0, // anything that does not equal the value queried has the opacity set to 0.10 (completely transparent)
       ]);
       map.setPaintProperty("crashes", "circle-stroke-width", [
         "case",
         ["==", ["get", "MannerofCollision"], geojson],
         0.75,
         0,
+      ]);
+      map.setPaintProperty("crashes", "circle-stroke-color", [
+        "case",
+        ["==", ["get", "MannerofCollision"], geojson],
+        "#222",
+        "rgba(0,0,0,0.0)",
       ]);
     }
     // also turn off the heat layer so taht only the crash points are shown
@@ -620,8 +617,26 @@
   function resetCrashes(geojson) {
     // resets to defaults
     if (map.getLayer("crashes")) {
-      map.setPaintProperty("crashes", "circle-opacity", 0.75);
-      map.setPaintProperty("crashes", "circle-stroke-width", 0.75);
+      // Set the paint properties back to the defaults defined when the layer was added
+      map.setPaintProperty("crashes", "circle-opacity", [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        10.5,
+        0.1,
+        12,
+        1,
+      ]);
+      map.setPaintProperty("crashes", "circle-stroke-width", [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        10.5,
+        0.1,
+        12,
+        0.5,
+      ]);
+      map.setPaintProperty("crashes", "circle-stroke-color", "#222");
     }
 
     if (map.getLayer("heatLayer")) {
