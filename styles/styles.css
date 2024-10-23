@@ -13,6 +13,19 @@ body {
   font-size: 100%;
 }
 
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+  background-color: #f0f0f0; /* Light background color */
+}
+
+/* Optional: Style to change the color of the circles */
+circle {
+  fill: #007bff; /* Change this to your preferred color */
+}
+
 h1 {
   position: absolute;
   z-index: 650;
@@ -173,19 +186,19 @@ h2:active {
 }
 
 .legend .bar {
-    display: inline-block;
-    height: 12 px;
-    width: 100%;
-    background: linear-gradient(
-      to right,
-     rgba(33,102,172,0) 0%,
-     rgba(103,169,207,0.75) 30%, 
-     rgba(209,229,240,0.9) 50%,
-     rgb(253,219,199) 75%, 
-     rgb(239,138,98) 90%,
-     rgb(178,24,43) 100%
-     );
-  }
+  display: inline-block;
+  height: 12 px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(33, 102, 172, 0) 0%,
+    rgba(103, 169, 207, 0.75) 30%,
+    rgba(209, 229, 240, 0.9) 50%,
+    rgb(253, 219, 199) 75%,
+    rgb(239, 138, 98) 90%,
+    rgb(178, 24, 43) 100%
+  );
+}
 
 /* Small devices (portrait phones, 576px and below) */
 @media (max-width: 576px) and (orientation: portrait) {
@@ -303,7 +316,6 @@ h3:active {
   /* background: rgba(25, 25, 25, 0.8); 
   border-radius: 5px;
   border: #0d0000 1px solid;*/
-  
 }
 
 #bar-chart {
